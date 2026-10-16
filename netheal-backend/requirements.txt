@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+networkx
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+joblib

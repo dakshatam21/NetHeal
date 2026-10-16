@@ -1,0 +1,129 @@
+import { useState } from 'react';
+import { RotateCcw, Zap, ZapOff } from 'lucide-react';
+import { Panel } from '../components/common/Panel';
+import { StatusBadge } from '../components/common/StatusBadge';
+import { EventFeed } from '../components/network/EventFeed';
+import { FailureList } from '../components/network/FailureList';
+import { NetworkGraph } from '../components/network/NetworkGraph';
+import { RoutePath } from '../components/network/RoutePath';
+import { useNetwork } from '../context/NetworkContext';
+
+export function FailureSimulatorPage() {
+  const { topology, failures, snapshot, source, destination, failRouter, restoreRouter, failLink, restoreLink, clearFailures } =
+    useNetwork();
+  const { route, status, counts } = snapshot;
+
+  const [routerChoice, setRouterChoice] = useState(topology.routers[0].id);
+  const [linkChoice, setLinkChoice] = useState(topology.links[0].id);
+
+  const routerFailed = failures.routers.includes(routerChoice);
+  const linkFailed = failures.links.includes(linkChoice);
+  const anyFailure = failures.routers.length + failures.links.length > 0;
+
+  return (
+    <div className="page">
+      <div className="sim-layout">
+        <Panel title="Failure Controls" tag="INJECT / RESTORE">
+          <div className="control-group">
+            <label className="label" htmlFor="sim-router">
+              Router
+            </label>
+            <select id="sim-router" className="select mono" value={routerChoice} onChange={(e) => setRouterChoice(e.target.value)}>
+              {topology.routers.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.id} — {r.ip}
+                  {failures.routers.includes(r.id) ? ' (FAILED)' : ''}
+                </option>
+              ))}
+            </select>
+            <div className="btn-row">
+              <button type="button" className="btn btn--danger btn--sm" disabled={routerFailed} onClick={() => failRouter(routerChoice)}>
+                <ZapOff size={14} /> Fail router
+              </button>
+              <button type="button" className="btn btn--primary btn--sm" disabled={!routerFailed} onClick={() => restoreRouter(routerChoice)}>
+                <Zap size={14} /> Restore router
+              </button>
+            </div>
+          </div>
+
+          <div className="control-group">
+            <label className="label" htmlFor="sim-link">
+              Link
+            </label>
+            <select id="sim-link" className="select mono" value={linkChoice} onChange={(e) => setLinkChoice(e.target.value)}>
+              {topology.links.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.id} — {l.source}–{l.target} ({l.latencyMs} ms)
+                  {failures.links.includes(l.id) ? ' (FAILED)' : ''}
+                </option>
+              ))}
+            </select>
+            <div className="btn-row">
+              <button type="button" className="btn btn--danger btn--sm" disabled={linkFailed} onClick={() => failLink(linkChoice)}>
+                <ZapOff size={14} /> Fail link
+              </button>
+              <button type="button" className="btn btn--primary btn--sm" disabled={!linkFailed} onClick={() => restoreLink(linkChoice)}>
+                <Zap size={14} /> Restore link
+              </button>
+            </div>
+          </div>
+
+          <button type="button" className="btn btn--ghost btn--sm btn--block" disabled={!anyFailure} onClick={clearFailures}>
+            <RotateCcw size={14} /> Reset all failures
+          </button>
+        </Panel>
+
+        <Panel title="Live Topology" tag="SIMULATED" className="panel--flush">
+          <NetworkGraph height={440} />
+        </Panel>
+      </div>
+
+      <div className="sim-lower">
+        <Panel title="Active Failures" tag={`${failures.routers.length + failures.links.length} ACTIVE`}>
+          <FailureList />
+        </Panel>
+
+        <Panel title="Connectivity & Route Status">
+          {status === 'unreachable' && (
+            <div className="alert alert--bad" role="alert">
+              <strong>DESTINATION UNREACHABLE</strong>
+              <span>
+                No usable path from {source} to {destination}. Restore a component to recover connectivity.
+              </span>
+            </div>
+          )}
+          <dl className="kv">
+            <dt>Endpoints</dt>
+            <dd className="mono">
+              {source} → {destination}
+            </dd>
+            <dt>Baseline route (BFS)</dt>
+            <dd>
+              <RoutePath path={route?.path ?? null} />
+            </dd>
+            <dt>Status</dt>
+            <dd>
+              <StatusBadge status={status} />
+            </dd>
+            <dt>Active routers</dt>
+            <dd className="mono">
+              {counts.routersActive}/{counts.routersTotal}
+            </dd>
+            <dt>Active links</dt>
+            <dd className="mono">
+              {counts.linksActive}/{counts.linksTotal}
+            </dd>
+            <dt>Availability</dt>
+            <dd className="mono">{counts.availabilityPct.toFixed(1)} %</dd>
+            <dt>ML-assisted route</dt>
+            <dd className="muted">Not connected</dd>
+          </dl>
+        </Panel>
+
+        <Panel title="Event Feed" tag="TIMESTAMPED">
+          <EventFeed limit={10} />
+        </Panel>
+      </div>
+    </div>
+  );
+}
