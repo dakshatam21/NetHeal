@@ -3,6 +3,7 @@ export type PageId = 'overview' | 'topology' | 'simulator' | 'analysis' | 'analy
 export type ComponentStatus = 'healthy' | 'degraded' | 'failed';
 export type RouteStatus = 'optimal' | 'rerouted' | 'unreachable';
 export type EventLevel = 'info' | 'success' | 'warning' | 'error';
+export type RoutingMethod = 'bfs' | 'dijkstra' | 'ml';
 
 export interface RouterInfo {
   id: string;
@@ -10,6 +11,7 @@ export interface RouterInfo {
   role: string;
   x: number;
   y: number;
+  status?: string;
 }
 
 export interface LinkInfo {
@@ -19,6 +21,7 @@ export interface LinkInfo {
   latencyMs: number;
   bandwidthMbps: number;
   packetLossPct: number;
+  status?: string;
 }
 
 export interface Topology {
@@ -39,12 +42,15 @@ export interface RouteMetrics {
   latencyMs: number;
   packetLossPct: number;
   bandwidthMbps: number;
+  predictedScore?: number | null;
 }
 
 export interface RouteResult {
   path: string[];
   linkIds: string[];
   metrics: RouteMetrics;
+  routingMethod?: RoutingMethod;
+  candidateCount?: number;
 }
 
 export interface HealthCounts {
@@ -82,6 +88,8 @@ export interface ToastMessage {
 export interface MlPrediction {
   available: boolean;
   message: string;
+  score?: number | null;
+  modelName?: string;
 }
 
 export interface TrendPoint {
@@ -95,4 +103,91 @@ export interface TrendPoint {
 export interface DemoAnalytics {
   trend: TrendPoint[];
   baseline: { packetLossPct: number; recoveryTimeS: number };
+}
+
+// ----------------------------------------------------
+// Backend API Schemas
+// ----------------------------------------------------
+
+export interface BackendNetworkStatus {
+  total_routers: number;
+  active_routers: number;
+  failed_routers: number;
+  total_links: number;
+  active_links: number;
+  failed_links: number;
+}
+
+export interface BackendRouteResponse {
+  source: string;
+  destination: string;
+  route_found: boolean;
+  routing_method: RoutingMethod;
+  route: string[];
+  hops: number;
+  total_latency_ms: number | null;
+  bottleneck_bandwidth_mbps: number | null;
+  estimated_packet_loss_percent: number | null;
+  predicted_quality_score: number | null;
+  candidate_routes_evaluated: number;
+  message: string | null;
+}
+
+export interface BackendCandidateRoute {
+  path: string[];
+  hops: number;
+  total_latency_ms: number;
+  bottleneck_bandwidth_mbps: number;
+  estimated_packet_loss_percent: number;
+  predicted_quality_score: number;
+}
+
+export interface BackendRouteComparison {
+  source: string;
+  destination: string;
+  bfs: BackendRouteResponse;
+  dijkstra: BackendRouteResponse;
+  ml: BackendRouteResponse;
+  candidates: BackendCandidateRoute[];
+  total_feasible_candidates: number;
+}
+
+export interface ExperimentScenarioResult {
+  method: string;
+  route_found: boolean;
+  route: string[];
+  hops: number;
+  total_latency_ms: number | null;
+  bottleneck_bandwidth_mbps: number | null;
+  estimated_packet_loss_percent: number | null;
+  predicted_quality_score: number | null;
+  candidate_routes_evaluated: number;
+  execution_time_ms: number;
+  message: string | null;
+}
+
+export interface ExperimentScenario {
+  scenario_id: string;
+  scenario_name: string;
+  description: string;
+  source: string;
+  destination: string;
+  results: Record<string, ExperimentScenarioResult>;
+}
+
+export interface ExperimentMethodSummary {
+  avg_latency_ms: number;
+  avg_hops: number;
+  avg_bandwidth_mbps: number;
+  avg_packet_loss_pct: number;
+  avg_quality_score: number | null;
+  avg_execution_time_ms: number;
+  success_rate_pct: number;
+}
+
+export interface ExperimentResultsPayload {
+  timestamp: string;
+  total_scenarios: number;
+  scenarios: ExperimentScenario[];
+  summary: Record<string, ExperimentMethodSummary>;
 }

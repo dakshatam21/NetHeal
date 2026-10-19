@@ -9,7 +9,7 @@ import { RoutePath } from '../components/network/RoutePath';
 import { useNetwork } from '../context/NetworkContext';
 
 export function FailureSimulatorPage() {
-  const { topology, failures, snapshot, source, destination, failRouter, restoreRouter, failLink, restoreLink, clearFailures } =
+  const { topology, failures, snapshot, source, destination, algorithm, failRouter, restoreRouter, failLink, restoreLink, clearFailures } =
     useNetwork();
   const { route, status, counts } = snapshot;
 
@@ -97,7 +97,7 @@ export function FailureSimulatorPage() {
             <dd className="mono">
               {source} → {destination}
             </dd>
-            <dt>Baseline route (BFS)</dt>
+            <dt>Active route ({algorithm})</dt>
             <dd>
               <RoutePath path={route?.path ?? null} />
             </dd>
@@ -115,8 +115,14 @@ export function FailureSimulatorPage() {
             </dd>
             <dt>Availability</dt>
             <dd className="mono">{counts.availabilityPct.toFixed(1)} %</dd>
-            <dt>ML-assisted route</dt>
-            <dd className="muted">Not connected</dd>
+            <dt>ML Routing Engine</dt>
+            <dd className="mono">
+              {algorithm === 'ml' && route?.metrics?.predictedScore != null ? (
+                <span className="text-accent">Active (Quality: {route.metrics.predictedScore.toFixed(2)})</span>
+              ) : (
+                <span className="muted">Ready (Random Forest Regressor)</span>
+              )}
+            </dd>
           </dl>
         </Panel>
 

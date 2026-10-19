@@ -1,27 +1,21 @@
 # NetHeal — AI-Powered Self-Healing Network Simulator (Frontend)
 
-NetHeal is a software-based network simulator where routers are nodes and links are edges.
-The finished system will simulate router/link failures, evaluate alternative routes, predict
-route quality with a machine-learning model, and compare conventional routing with ML-assisted routing.
+NetHeal is an interactive web dashboard for real-time network topology visualization, failure simulation, route analysis, and machine-learning-assisted path evaluation.
 
-**This repository is the frontend only.** It runs entirely in the browser on mock data and a small
-client-side routing demonstration. No Python backend, NetworkX simulation, ML inference or database exists yet.
+**This frontend is fully integrated with the NetHeal FastAPI backend.** It communicates via HTTP REST requests to `http://localhost:8000`, reflecting actual NetworkX simulation state and Random Forest ML model predictions.
 
-## Features currently implemented
+## Features Implemented
 
-- Five working pages: Overview, Network Topology, Failure Simulator, Route Analysis, Performance Analytics.
-- Interactive React Flow topology (7 routers, 11 links) with custom router nodes, status-coloured edges,
-  selected-route highlighting, zoom/pan/fit-view controls, minimap, legend and router-details panel.
-- Fail / restore routers and links, clear all failures, reset the whole simulation (with confirmation).
-- Route recalculation after every change, "DESTINATION UNREACHABLE" state, timestamped event feed, toast notifications.
-- Route analysis: baseline route, alternative feasible routes, comparison table, hop/latency/loss/bandwidth.
-- Recharts analytics, all labelled DEMO DATA / SIMULATED DATA.
-- A placeholder section for ML-assisted routing marked "NOT CONNECTED".
+- **Five Integrated Pages**: Overview Dashboard, Network Topology, Failure Simulator, Route Analysis, and Performance Analytics.
+- **Interactive Topology Graph**: React Flow 12 (`@xyflow/react`) canvas rendering 7 routers and 11 links with live status-colored edges, active route highlighting, minimap, and router details inspection.
+- **Failure Simulation & Self-Healing**: Live failure injection and restoration for any router or link, triggering instant rerouting on the backend.
+- **Route Analysis**: Algorithm switcher (`BFS`, `Dijkstra`, `ML`), candidate routes table with predicted quality scores, latency, hops, loss, and capacity.
+- **Performance Analytics**: Real empirical benchmark charts powered by live experiment suite outputs (`GET /api/experiments/results`).
+- **Live Connection Detection**: Persistent topbar indicator showing backend health and automated reconnection handling.
 
 ## Technologies
 
-React 18, TypeScript (strict), Vite, @xyflow/react (React Flow 12), Recharts, lucide-react, plain CSS.
-No UI framework, no Tailwind, no Redux, no localStorage.
+React 18, TypeScript (strict mode), Vite, `@xyflow/react`, Recharts, Lucide React icons, Vanilla CSS.
 
 ## Prerequisites
 

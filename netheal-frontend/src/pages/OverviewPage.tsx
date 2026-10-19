@@ -9,7 +9,7 @@ import { RoutePath } from '../components/network/RoutePath';
 import { useNetwork } from '../context/NetworkContext';
 
 export function OverviewPage() {
-  const { snapshot, source, destination } = useNetwork();
+  const { snapshot, source, destination, routingMethod } = useNetwork();
   const { counts, route, status } = snapshot;
 
   const total = counts.healthy + counts.degraded + counts.failed;
@@ -87,9 +87,17 @@ export function OverviewPage() {
                 <RoutePath path={route?.path ?? null} />
               </dd>
               <dt>Routing method</dt>
-              <dd>Baseline BFS (shortest hop)</dd>
-              <dt>ML-assisted</dt>
-              <dd className="muted">Not connected</dd>
+              <dd className="mono">{routingMethod.toUpperCase()}</dd>
+              <dt>ML Engine</dt>
+              <dd style={{ color: '#38D6B0' }}>Random Forest (Active)</dd>
+              {route?.metrics.predictedScore !== undefined && route.metrics.predictedScore !== null && (
+                <>
+                  <dt>Predicted Quality</dt>
+                  <dd className="mono" style={{ color: '#38D6B0' }}>
+                    {route.metrics.predictedScore.toFixed(2)} / 100
+                  </dd>
+                </>
+              )}
               <dt>Route status</dt>
               <dd>
                 <StatusBadge status={status} label={status === 'unreachable' ? 'Destination unreachable' : status} />

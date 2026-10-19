@@ -8,7 +8,7 @@ import { RoutePath } from '../components/network/RoutePath';
 import { useNetwork } from '../context/NetworkContext';
 
 export function TopologyPage() {
-  const { snapshot } = useNetwork();
+  const { snapshot, algorithm } = useNetwork();
   const { route, status } = snapshot;
 
   return (
@@ -21,7 +21,7 @@ export function TopologyPage() {
         <Panel title="Route Endpoints">
           <EndpointSelector idPrefix="topo" />
           <div className="route-summary">
-            <div className="label">Baseline route (BFS)</div>
+            <div className="label">Active route ({algorithm})</div>
             <RoutePath path={route?.path ?? null} />
             <div className="route-summary__row">
               <StatusBadge status={status} label={status === 'unreachable' ? 'Unreachable' : status} />
