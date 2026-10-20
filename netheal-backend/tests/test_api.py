@@ -87,3 +87,38 @@ def test_api_network_reset(api_client):
     res_reset = api_client.post("/api/network/reset")
     assert res_reset.status_code == 200
     assert res_reset.json()["network_status"]["failed_routers"] == 0
+
+
+def test_api_analyze_unknown_router_returns_404(api_client):
+    res_src = api_client.post(
+        "/api/routes/analyze",
+        json={"source": "R999", "destination": "R7", "method": "bfs"},
+    )
+    assert res_src.status_code == 404
+    assert "does not exist" in res_src.json()["detail"]
+
+    res_dst = api_client.post(
+        "/api/routes/analyze",
+        json={"source": "R1", "destination": "R999", "method": "bfs"},
+    )
+    assert res_dst.status_code == 404
+
+
+def test_api_analyze_invalid_method_returns_400(api_client):
+    res = api_client.post(
+        "/api/routes/analyze",
+        json={"source": "R1", "destination": "R7", "method": "quantum_routing"},
+    )
+    assert res.status_code == 400
+    assert "Unsupported routing method" in res.json()["detail"]
+
+
+def test_api_health_subsystem_readiness(api_client):
+    res = api_client.get("/api/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "healthy"
+    assert data["network_initialized"] is True
+    assert data["ml_model_loaded"] is True
+    assert data["ml_error"] is None
+

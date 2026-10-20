@@ -89,7 +89,9 @@ export function OverviewPage() {
               <dt>Routing method</dt>
               <dd className="mono">{routingMethod.toUpperCase()}</dd>
               <dt>ML Engine</dt>
-              <dd style={{ color: '#38D6B0' }}>Random Forest (Active)</dd>
+              <dd style={{ color: '#38D6B0' }}>
+                {routingMethod === 'ml' ? 'Random Forest (Active Routing)' : 'Random Forest (Standby)'}
+              </dd>
               {route?.metrics.predictedScore !== undefined && route.metrics.predictedScore !== null && (
                 <>
                   <dt>Predicted Quality</dt>

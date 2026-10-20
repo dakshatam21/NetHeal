@@ -60,7 +60,11 @@ def restore_link(network: nx.Graph, router_a: str, router_b: str) -> str:
 
 
 def get_network_status(network: nx.Graph) -> dict:
-    """Return the current router and link status."""
+    """
+    Return the current router and link status.
+    A link is only operational (active) if the link itself is active
+    AND both incident endpoint routers are active.
+    """
 
     active_routers = sum(
         1
@@ -70,10 +74,13 @@ def get_network_status(network: nx.Graph) -> dict:
 
     failed_routers = network.number_of_nodes() - active_routers
 
+    # A link can only route traffic if it is active and both endpoints are active
     active_links = sum(
         1
-        for _, _, data in network.edges(data=True)
+        for router_a, router_b, data in network.edges(data=True)
         if data["status"] == "active"
+        and network.nodes[router_a]["status"] == "active"
+        and network.nodes[router_b]["status"] == "active"
     )
 
     failed_links = network.number_of_edges() - active_links

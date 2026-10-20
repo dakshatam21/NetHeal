@@ -66,18 +66,16 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
 ```
 
 ### `GET /api/network/status`
-- **Description**: Current real-time health counts and failure arrays.
+- **Description**: Current real-time health counts for routers and links.
 - **Response**: `200 OK`
 ```json
 {
-  "routers_total": 7,
-  "routers_active": 7,
-  "links_total": 11,
-  "links_active": 11,
-  "failed_routers": [],
-  "failed_links": [],
-  "availability_percent": 100.0,
-  "is_fully_operational": true
+  "total_routers": 7,
+  "active_routers": 7,
+  "failed_routers": 0,
+  "total_links": 11,
+  "active_links": 11,
+  "failed_links": 0
 }
 ```
 
@@ -85,34 +83,35 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
 
 ## 3. Failure Injection & Self-Healing
 
-### `POST /api/network/fail/router/{router_id}`
+### `POST /api/network/fail/router/{router}`
 - **Description**: Deactivates a router node and marks all incident links as unusable.
-- **Path Parameter**: `router_id` (string, e.g., `R2`)
+- **Path Parameter**: `router` (string, e.g., `R2`)
 - **Response**: `200 OK`
 ```json
 {
-  "message": "Router R2 marked as failed.",
-  "status": {
-    "routers_total": 7,
-    "routers_active": 6,
-    "links_total": 11,
-    "links_active": 11,
-    "failed_routers": ["R2"],
-    "failed_links": [],
-    "availability_percent": 85.71,
-    "is_fully_operational": false
+  "success": true,
+  "message": "Router R2 has failed.",
+  "network_status": {
+    "total_routers": 7,
+    "active_routers": 6,
+    "failed_routers": 1,
+    "total_links": 11,
+    "active_links": 9,
+    "failed_links": 2
   }
 }
 ```
-- **Error**: `404 Not Found` if `router_id` is invalid.
+- **Error**: `404 Not Found` if `router` is invalid.
 
-### `POST /api/network/restore/router/{router_id}`
+### `POST /api/network/restore/router/{router}`
 - **Description**: Re-enables a failed router node.
+- **Path Parameter**: `router` (string, e.g., `R2`)
 - **Response**: `200 OK`
 ```json
 {
-  "message": "Router R2 restored to active status.",
-  "status": { ... }
+  "success": true,
+  "message": "Router R2 has been restored.",
+  "network_status": { ... }
 }
 ```
 
@@ -121,38 +120,59 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
 - **Request Body**:
 ```json
 {
-  "source": "R5",
-  "destination": "R7"
+  "router_a": "R5",
+  "router_b": "R7"
 }
 ```
 - **Response**: `200 OK`
 ```json
 {
-  "message": "Link between R5 and R7 marked as failed.",
-  "status": {
-    "failed_links": [["R5", "R7"]]
+  "success": true,
+  "message": "Link R5-R7 has failed.",
+  "network_status": {
+    "total_routers": 7,
+    "active_routers": 7,
+    "failed_routers": 0,
+    "total_links": 11,
+    "active_links": 10,
+    "failed_links": 1
   }
 }
 ```
+- **Error**: `404 Not Found` if link does not exist.
 
 ### `POST /api/network/restore/link`
 - **Description**: Restores a previously failed link.
-- **Request Body**: Same as fail link.
+- **Request Body**:
+```json
+{
+  "router_a": "R5",
+  "router_b": "R7"
+}
+```
 - **Response**: `200 OK`
+```json
+{
+  "success": true,
+  "message": "Link R5-R7 has been restored.",
+  "network_status": { ... }
+}
+```
 
 ### `POST /api/network/reset`
 - **Description**: Resets all routers and links to pristine active status.
 - **Response**: `200 OK`
 ```json
 {
-  "message": "Network reset to initial topology.",
-  "status": {
-    "routers_active": 7,
-    "links_active": 11,
-    "failed_routers": [],
-    "failed_links": [],
-    "availability_percent": 100.0,
-    "is_fully_operational": true
+  "success": true,
+  "message": "Network topology reset to initial default state successfully.",
+  "network_status": {
+    "total_routers": 7,
+    "active_routers": 7,
+    "failed_routers": 0,
+    "total_links": 11,
+    "active_links": 11,
+    "failed_links": 0
   }
 }
 ```
@@ -174,23 +194,23 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
 - **Response**: `200 OK`
 ```json
 {
-  "route_found": true,
   "source": "R1",
   "destination": "R7",
+  "route_found": true,
   "routing_method": "ml",
   "route": ["R1", "R2", "R5", "R7"],
   "hops": 3,
   "total_latency_ms": 24,
-  "bottleneck_bandwidth_mbps": 1000,
-  "estimated_packet_loss_percent": 0.05,
-  "predicted_quality_score": 91.24,
-  "candidate_routes_evaluated": 6,
+  "bottleneck_bandwidth_mbps": 100,
+  "estimated_packet_loss_percent": 2.47,
+  "predicted_quality_score": 75.06,
+  "candidate_routes_evaluated": 16,
   "message": null
 }
 ```
 
 ### `POST /api/routes/compare`
-- **Description**: Simultaneously evaluates BFS, Dijkstra, and ML routing on the exact same topology snapshot.
+- **Description**: Simultaneously evaluates BFS, Dijkstra, and ML routing on the exact same topology snapshot. Also returns ranked candidate paths.
 - **Request Body**:
 ```json
 {
@@ -204,28 +224,58 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
   "source": "R1",
   "destination": "R7",
   "bfs": {
+    "source": "R1",
+    "destination": "R7",
+    "route_found": true,
+    "routing_method": "bfs",
     "route": ["R1", "R2", "R5", "R7"],
     "hops": 3,
     "total_latency_ms": 24,
-    "bottleneck_bandwidth_mbps": 1000,
-    "estimated_packet_loss_percent": 0.05
+    "bottleneck_bandwidth_mbps": 100,
+    "estimated_packet_loss_percent": 2.47,
+    "predicted_quality_score": null,
+    "candidate_routes_evaluated": 1,
+    "message": null
   },
   "dijkstra": {
+    "source": "R1",
+    "destination": "R7",
+    "route_found": true,
+    "routing_method": "dijkstra",
     "route": ["R1", "R2", "R5", "R7"],
     "hops": 3,
     "total_latency_ms": 24,
-    "bottleneck_bandwidth_mbps": 1000,
-    "estimated_packet_loss_percent": 0.05
+    "bottleneck_bandwidth_mbps": 100,
+    "estimated_packet_loss_percent": 2.47,
+    "predicted_quality_score": null,
+    "candidate_routes_evaluated": 1,
+    "message": null
   },
   "ml": {
+    "source": "R1",
+    "destination": "R7",
+    "route_found": true,
+    "routing_method": "ml",
     "route": ["R1", "R2", "R5", "R7"],
     "hops": 3,
     "total_latency_ms": 24,
-    "bottleneck_bandwidth_mbps": 1000,
-    "estimated_packet_loss_percent": 0.05,
-    "predicted_quality_score": 91.24
+    "bottleneck_bandwidth_mbps": 100,
+    "estimated_packet_loss_percent": 2.47,
+    "predicted_quality_score": 75.06,
+    "candidate_routes_evaluated": 16,
+    "message": null
   },
-  "candidate_routes_evaluated": 6
+  "candidates": [
+    {
+      "path": ["R1", "R2", "R5", "R7"],
+      "hops": 3,
+      "total_latency_ms": 24,
+      "bottleneck_bandwidth_mbps": 100,
+      "estimated_packet_loss_percent": 2.47,
+      "predicted_quality_score": 75.06
+    }
+  ],
+  "total_feasible_candidates": 16
 }
 ```
 

@@ -1,6 +1,7 @@
 # NetHeal — AI-Powered Self-Healing Network Simulator
 
-[![Backend Tests: 29 Passed](https://img.shields.io/badge/backend%20tests-29%20passed-brightgreen)](#automated-testing)
+[![Backend Tests: 37 Passed](https://img.shields.io/badge/backend%20tests-37%20passed-brightgreen)](#automated-testing)
+[![Frontend Tests: 13 Passed](https://img.shields.io/badge/frontend%20tests-13%20passed-brightgreen)](#automated-testing)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-strict-blue)](#prerequisites--tech-stack)
 [![FastAPI: 0.115+](https://img.shields.io/badge/FastAPI-0.115%2B-teal)](#prerequisites--tech-stack)
 [![React: 18](https://img.shields.io/badge/React-18-cyan)](#prerequisites--tech-stack)
@@ -41,8 +42,8 @@ NetHeal addresses this challenge by providing:
 ## 3. Technology Stack
 
 - **Backend**: Python 3.10–3.13, FastAPI, Uvicorn, NetworkX 3.4, Scikit-Learn 1.7.2, Pandas, Joblib.
-- **Frontend**: React 18, TypeScript (strict mode), Vite 5.4, `@xyflow/react` (React Flow 12), Recharts 2.13, Lucide React icons.
-- **Testing**: Python pytest, `fastapi.testclient.TestClient`, custom direct runner `run_tests.py`.
+- **Frontend**: React 18, TypeScript (strict mode), Vite 5.4, `@xyflow/react` (React Flow 12), Recharts 2.13, Lucide React icons, Vitest.
+- **Testing**: Python pytest, `fastapi.testclient.TestClient`, custom direct runner `run_tests.py`, Vitest frontend suite.
 
 ---
 
@@ -56,18 +57,18 @@ NetHeal/
 │   ├── DEVELOPMENT_GUIDE.md     # Setup, developer, & troubleshooting guide
 │   ├── ML_DOCUMENTATION.md      # ML model, dataset, & target formula
 │   ├── EXPERIMENTS_AND_RESULTS.md # 7-scenario empirical benchmark results
-│   ├── TESTING_REPORT.md        # 29-test automated QA report
+│   ├── TESTING_REPORT.md        # 37-backend & 13-frontend automated QA report
 │   ├── USER_GUIDE.md            # Interactive dashboard user manual
 │   ├── PRODUCT_SCOPE_AND_LIMITATIONS.md # Boundaries & system scope
 │   ├── PROJECT_AUDIT.md         # Repository audit & gap resolution
 │   └── IMPLEMENTATION_REPORT.md # Final deliverable summary
 ├── netheal-backend/             # Python FastAPI backend
-│   ├── data/                    # Synthetic route training dataset
+│   ├── data/                    # Synthetic route training dataset (7,833 records)
 │   ├── models/                  # Serialized Random Forest model artifact
 │   ├── results/                 # Experiment output JSON and CSV records
 │   ├── services/                # ML inference & benchmark runner services
 │   ├── simulator/               # NetworkX topology, failures, & routing
-│   ├── tests/                   # 29 unit and API automated test suites
+│   ├── tests/                   # 37 unit and API automated test suites
 │   ├── main.py                  # FastAPI application entry point
 │   ├── run_tests.py             # Direct test runner script
 │   └── requirements.txt         # Backend Python dependencies
@@ -77,6 +78,7 @@ NetHeal/
     │   ├── context/             # NetworkContext global state
     │   ├── pages/               # 5 application views
     │   ├── services/            # Typed API client
+    │   ├── tests/               # 13 Vitest unit and integration tests
     │   └── types/               # TypeScript interfaces
     ├── package.json             # NPM dependencies & scripts
     └── vite.config.ts           # Vite build configuration
@@ -115,19 +117,27 @@ npm run dev
 
 ## 7. Automated Testing
 
-### Backend Unit & Integration Tests (29 Tests)
-Execute the direct automated test suite:
+### Backend Unit & Integration Tests (37 Tests)
+Execute the direct automated test suite or pytest:
 ```bash
 cd netheal-backend
 python -u run_tests.py
+# or: pytest -v tests/
 ```
-- **Outcome**: **29 / 29 passed (100% pass rate)**.
-- Covers topology creation, node/link failures, BFS/Dijkstra/ML routing, quality inference, REST API endpoints, and experiment runners.
+- **Outcome**: **37 / 37 passed (100% pass rate)**.
+- Covers topology creation, node/link failures, BFS/Dijkstra/ML routing, quality inference, edge cases (same source-destination, disconnected nodes, ML fallback), REST API endpoints, and experiment runners.
 
-### Frontend Type-Checking
+### Frontend Unit & Integration Tests (13 Tests)
 ```bash
 cd netheal-frontend
-npx tsc -p tsconfig.app.json --noEmit
+npm test
+```
+- **Outcome**: **13 / 13 passed (100% pass rate)** across 2 test suites (`HealthCounts.test.ts`, `integration.test.ts`).
+
+### Frontend Production Build & Type-Checking
+```bash
+cd netheal-frontend
+npm run build
 ```
 - **Outcome**: **0 errors, 0 warnings**.
 
@@ -135,11 +145,11 @@ npx tsc -p tsconfig.app.json --noEmit
 
 ## 8. Machine Learning & Dataset Details
 
-- **Dataset**: `netheal-backend/data/routes_dataset.csv` contains 5,000 synthetic route records with features `hops`, `total_latency`, `bottleneck_bandwidth`, and `packet_loss`.
+- **Dataset**: `netheal-backend/data/route_training_data.csv` contains 7,833 synthetic candidate route records generated across 1,000 scenarios with features `hops`, `total_latency_ms`, `bottleneck_bandwidth_mbps`, and `estimated_packet_loss_percent`.
 - **Target SLA Formula**:
-  $$Q = 100 - (0.4 \times \text{latency}) - (2.5 \times \text{hops}) - (5.0 \times \text{loss}) + (0.02 \times \text{bandwidth})$$
-- **Model**: Trained Scikit-Learn `RandomForestRegressor(n_estimators=100)` saved to `netheal-backend/models/route_quality_model.pkl`.
-- To review model evaluation metrics and regression comparisons ($R^2 = 0.998$), see [`docs/ML_DOCUMENTATION.md`](docs/ML_DOCUMENTATION.md).
+  $$Q = 0.35 \cdot \left(\frac{100}{1 + \frac{\text{Latency}}{50}}\right) + 0.30 \cdot \min(100, \text{Bandwidth}) + 0.25 \cdot \max(0, 100 - 10 \cdot \text{Loss}) + 0.10 \cdot \max(0, 100 - 10 \cdot \text{Hops})$$
+- **Model**: Trained Scikit-Learn `RandomForestRegressor(n_estimators=100)` saved to `netheal-backend/models/route_quality_model.pkl` ($R^2 = 0.998$).
+- To review model evaluation metrics and regression comparisons, see [`docs/ML_DOCUMENTATION.md`](docs/ML_DOCUMENTATION.md).
 
 ---
 

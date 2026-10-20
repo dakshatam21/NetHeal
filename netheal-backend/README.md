@@ -32,7 +32,7 @@ python -u run_tests.py
 - `services/`:
   - `ml_service.py`: Preloads and runs inference on the 56.2 MB Random Forest model (`models/route_quality_model.pkl`) using vectorized batch evaluation.
   - `experiment_service.py`: Executes 7 reproducible network benchmark scenarios with high-resolution monotonic timing.
-- `tests/`: 29 automated tests across 6 modules (`test_topology.py`, `test_failures.py`, `test_routing.py`, `test_ml.py`, `test_api.py`, `test_experiments.py`).
+- `tests/`: 37 automated tests across 6 modules (`test_topology.py`, `test_failures.py`, `test_routing.py`, `test_ml.py`, `test_api.py`, `test_experiments.py`).
 - `results/`: Stores `experiment_results.json` and `experiment_results.csv`.
 
 For full REST API schemas and examples, see [`docs/API_REFERENCE.md`](../docs/API_REFERENCE.md).

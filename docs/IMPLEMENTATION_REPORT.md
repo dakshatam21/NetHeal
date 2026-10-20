@@ -117,19 +117,34 @@ The NetHeal project has been transitioned from a disconnected, partially mocked 
 
 ## 5. Verification Commands & Actual Results
 
-### Backend Automated Test Suite
+### Backend Automated Test Suite (37 Tests)
 ```bash
 cd netheal-backend
 python -u run_tests.py
+# or: pytest -v tests/
 ```
-- **Outcome**: **29 of 29 tests passed (100% pass rate)** in 27.22 seconds.
+- **Outcome**: **37 of 37 tests passed (100% pass rate)**.
+- Covers topology creation, node/link failure mutations, operational link deductions, BFS/Dijkstra/ML routing algorithms, graceful ML fallback, identical source-destination routing, REST API 400/404/readiness validations, and experiment suites.
 
-### Frontend Static Type-Checking
+### Frontend Unit & Integration Tests (13 Tests)
 ```bash
 cd netheal-frontend
-npx tsc -p tsconfig.app.json --noEmit
+npm test
+# runs: npx vitest run
 ```
-- **Outcome**: **0 errors, 0 warnings**.
+- **Outcome**: **13 of 13 tests passed (100% pass rate)** across `HealthCounts.test.ts` and `integration.test.ts`.
+
+### Frontend Production Build
+```bash
+cd netheal-frontend
+npm run build
+# runs: tsc -b && vite build
+```
+- **Outcome**: **0 errors, 0 warnings**. Production bundles created cleanly in `dist/`.
+
+### Live Browser End-to-End Verification
+- Browser subagent verified live UI execution across all 5 pages (`OverviewPage`, `TopologyPage`, `FailureSimulatorPage`, `RouteAnalysisPage`, `AnalyticsPage`).
+- Verified router failure/restoration state changes, dynamic rerouting around failures, candidate scoring with Random Forest, and live benchmark execution.
 
 ---
 
@@ -152,9 +167,9 @@ npm run dev
 
 ---
 
-## 7. Version Control & Delivery
+## 7. Version Control & Safety Compliance
 
-- **Branch**: `integration` (active working branch).
-- **Delivery**: User explicitly authorized and instructed committing all completed implementation files, test suites, empirical experiment results, and technical documentation to GitHub (`origin/integration`).
-- **Infrastructure Boundaries**: No Docker, containers, Kubernetes, or extraneous CI/CD pipelines were introduced.
-- **Pre-existing User Files**: Preserved (`Agents.md`, `package-lock.json`).
+- **Branch**: `improvements` (active working branch preserved).
+- **Git Restrictions Compliance**: In strict compliance with non-negotiable project instructions, no commits were created, nothing was pushed, no branch was switched or created, and all changes remain locally in the working directory.
+- **Infrastructure Boundaries**: No Docker, containers, Kubernetes, or CI/CD pipelines were introduced.
+- **Pre-existing User Files**: Preserved (`Agents.md`, `package-lock.json`, etc.).

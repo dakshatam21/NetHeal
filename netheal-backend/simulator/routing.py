@@ -103,6 +103,7 @@ def find_route(
             "message": "Source and destination are identical.",
         }
 
+    ml_warning = None
     try:
         if method == "bfs":
             route = nx.shortest_path(
@@ -152,14 +153,24 @@ def find_route(
                 }
 
             cand_metrics_list = [calculate_route_metrics(usable_network, c) for c in candidates]
-            from services.ml_service import predict_route_qualities
-            cand_scores = predict_route_qualities(cand_metrics_list)
-            scored_routes = list(zip(cand_scores, candidates, cand_metrics_list))
+            try:
+                from services.ml_service import predict_route_qualities
+                cand_scores = predict_route_qualities(cand_metrics_list)
+                scored_routes = list(zip(cand_scores, candidates, cand_metrics_list))
 
-            # Highest predicted quality wins; tie-break on lower latency
-            scored_routes.sort(key=lambda item: (item[0], -item[2]["total_latency_ms"]), reverse=True)
-            predicted_score, route, _ = scored_routes[0]
-            candidate_count = len(scored_routes)
+                # Highest predicted quality wins; tie-break on lower latency
+                scored_routes.sort(key=lambda item: (item[0], -item[2]["total_latency_ms"]), reverse=True)
+                predicted_score, route, _ = scored_routes[0]
+                candidate_count = len(scored_routes)
+                ml_warning = None
+            except Exception as ml_err:
+                # ML model unavailable or encountered an error.
+                # Graceful fallback to Dijkstra lowest-latency path ensures conventional
+                # routing continues uninterrupted while alerting caller.
+                route = nx.shortest_path(usable_network, source=source, target=destination, weight="latency")
+                candidate_count = len(candidates)
+                predicted_score = None
+                ml_warning = f"ML model unavailable: {str(ml_err)}. Fallback to Dijkstra route used."
 
     except nx.NetworkXNoPath:
         return {
@@ -191,7 +202,7 @@ def find_route(
         "estimated_packet_loss_percent": metrics["estimated_packet_loss_percent"],
         "predicted_quality_score": round(predicted_score, 4) if predicted_score is not None else None,
         "candidate_routes_evaluated": candidate_count,
-        "message": None,
+        "message": ml_warning,
     }
 
 
@@ -203,6 +214,7 @@ def compare_routes(
     """
     Evaluate BFS, Dijkstra, and ML algorithms on the exact same topology state.
     Also returns all feasible candidate routes with their evaluated metrics.
+    Isolated so that an ML scoring failure never prevents BFS or Dijkstra from returning.
     """
     usable_network = get_usable_network(network)
 
@@ -212,29 +224,49 @@ def compare_routes(
 
     # Enumerate all feasible simple routes
     candidates_detail = []
-    if source in usable_network and destination in usable_network and source != destination:
-        cutoff = min(usable_network.number_of_nodes() - 1, 8)
-        raw_paths = list(
-            nx.all_simple_paths(
-                usable_network,
-                source=source,
-                target=destination,
-                cutoff=cutoff
-            )
-        )
-        raw_metrics = [calculate_route_metrics(usable_network, p) for p in raw_paths]
-        from services.ml_service import predict_route_qualities
-        raw_scores = predict_route_qualities(raw_metrics)
-        for path, cand_metrics, cand_score in zip(raw_paths, raw_metrics, raw_scores):
+    if source in usable_network and destination in usable_network:
+        if source == destination:
             candidates_detail.append({
-                "path": path,
-                "hops": cand_metrics["hops"],
-                "total_latency_ms": cand_metrics["total_latency_ms"],
-                "bottleneck_bandwidth_mbps": cand_metrics["bottleneck_bandwidth_mbps"],
-                "estimated_packet_loss_percent": cand_metrics["estimated_packet_loss_percent"],
-                "predicted_quality_score": round(cand_score, 4),
+                "path": [source],
+                "hops": 0,
+                "total_latency_ms": 0.0,
+                "bottleneck_bandwidth_mbps": 100.0,
+                "estimated_packet_loss_percent": 0.0,
+                "predicted_quality_score": 100.0,
             })
-        candidates_detail.sort(key=lambda c: c["predicted_quality_score"], reverse=True)
+        else:
+            cutoff = min(usable_network.number_of_nodes() - 1, 8)
+            raw_paths = list(
+                nx.all_simple_paths(
+                    usable_network,
+                    source=source,
+                    target=destination,
+                    cutoff=cutoff
+                )
+            )
+            raw_metrics = [calculate_route_metrics(usable_network, p) for p in raw_paths]
+            try:
+                from services.ml_service import predict_route_qualities
+                raw_scores = predict_route_qualities(raw_metrics)
+            except Exception:
+                raw_scores = [None] * len(raw_paths)
+
+            for path, cand_metrics, cand_score in zip(raw_paths, raw_metrics, raw_scores):
+                candidates_detail.append({
+                    "path": path,
+                    "hops": cand_metrics["hops"],
+                    "total_latency_ms": cand_metrics["total_latency_ms"],
+                    "bottleneck_bandwidth_mbps": cand_metrics["bottleneck_bandwidth_mbps"],
+                    "estimated_packet_loss_percent": cand_metrics["estimated_packet_loss_percent"],
+                    "predicted_quality_score": round(cand_score, 4) if cand_score is not None else None,
+                })
+            candidates_detail.sort(
+                key=lambda c: (
+                    c["predicted_quality_score"] if c["predicted_quality_score"] is not None else -1,
+                    -c["total_latency_ms"]
+                ),
+                reverse=True
+            )
 
     return {
         "source": source,

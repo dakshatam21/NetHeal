@@ -81,7 +81,7 @@ sequenceDiagram
     participant ML as ML Inference Engine
 
     User->>UI: Click "Fail Link (R5-R7)"
-    UI->>API: POST /api/network/fail/link {"u": "R5", "v": "R7"}
+    UI->>API: POST /api/network/fail/link {"router_a": "R5", "router_b": "R7"}
     API->>Sim: Update edge attribute active=False
     Sim-->>API: Updated graph state (10/11 active)
     API-->>UI: 200 OK {success: true, network_status}

@@ -97,11 +97,24 @@ def home():
 
 @app.get("/api/health")
 def health_check():
+    ml_ready = False
+    ml_error = None
+    try:
+        load_model()
+        ml_ready = True
+    except Exception as e:
+        ml_error = str(e)
+
+    network_ready = network is not None
+    status = "healthy" if (network_ready and ml_ready) else ("degraded" if network_ready else "unhealthy")
+
     return {
-        "status": "healthy",
-        "network_initialized": network is not None,
-        "routers_count": network.number_of_nodes(),
-        "links_count": network.number_of_edges(),
+        "status": status,
+        "network_initialized": network_ready,
+        "ml_model_loaded": ml_ready,
+        "ml_error": ml_error,
+        "routers_count": network.number_of_nodes() if network else 0,
+        "links_count": network.number_of_edges() if network else 0,
     }
 
 
@@ -204,6 +217,16 @@ def api_restore_link(request: LinkRequest):
 @app.post("/api/routes/analyze")
 def analyze_route(request: RouteRequest):
     with network_lock:
+        if request.source not in network:
+            raise HTTPException(status_code=404, detail=f"Source router '{request.source}' does not exist.")
+        if request.destination not in network:
+            raise HTTPException(status_code=404, detail=f"Destination router '{request.destination}' does not exist.")
+        if request.method.lower() not in {"bfs", "dijkstra", "ml"}:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported routing method '{request.method}'. Choose 'bfs', 'dijkstra', or 'ml'.",
+            )
+
         try:
             return find_route(
                 network,

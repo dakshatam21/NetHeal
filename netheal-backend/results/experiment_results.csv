@@ -1,22 +1,22 @@
 scenario_id,scenario_name,source,destination,method,route_found,route,hops,total_latency_ms,bottleneck_bandwidth_mbps,estimated_packet_loss_percent,predicted_quality_score,candidate_routes_evaluated,execution_time_ms
-scenario_1_normal,Normal Healthy Topology,R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.4247
-scenario_1_normal,Normal Healthy Topology,R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.3865
-scenario_1_normal,Normal Healthy Topology,R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,16,23.2797
-scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,bfs,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,-1.0,1,0.2578
-scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,dijkstra,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,-1.0,1,0.2372
-scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,ml,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,64.4585,10,26.1907
-scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.2833
-scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.3429
-scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,2,20.1858
-scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,bfs,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.3624
-scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,dijkstra,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.3217
-scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,ml,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,58.4521,1,22.0037
-scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,bfs,True,R1 -> R3 -> R6 -> R7,3,36,60,6.361,-1.0,1,0.2726
-scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,dijkstra,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.2525
-scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,ml,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,58.4521,8,22.7262
-scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,bfs,False,NONE,0,-1,-1,-1.0,-1.0,0,0.2225
-scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,dijkstra,False,NONE,0,-1,-1,-1.0,-1.0,0,0.2112
-scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,ml,False,NONE,0,-1,-1,-1.0,-1.0,0,0.6622
-scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.1819
-scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.2329
-scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,16,21.453
+scenario_1_normal,Normal Healthy Topology,R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.3051
+scenario_1_normal,Normal Healthy Topology,R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.3192
+scenario_1_normal,Normal Healthy Topology,R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,16,22.7832
+scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,bfs,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,-1.0,1,0.2242
+scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,dijkstra,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,-1.0,1,0.1982
+scenario_2_single_link_failure,Primary Link Failure (R2-R5),R1,R7,ml,True,R1 -> R3 -> R5 -> R7,3,27,70,4.44,64.4585,10,30.7163
+scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.2457
+scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.212
+scenario_3_single_router_failure,Central Transit Router Failure (R3),R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,2,26.0518
+scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,bfs,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.2091
+scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,dijkstra,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.314
+scenario_4_multi_component_failure,Multiple Critical Failures (R3 + Link R1-R2),R1,R7,ml,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,58.4521,1,18.6603
+scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,bfs,True,R1 -> R3 -> R6 -> R7,3,36,60,6.361,-1.0,1,0.2501
+scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,dijkstra,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,-1.0,1,0.2554
+scenario_5_bottleneck_diversion,Low-Latency High-Loss Tradeoff,R1,R7,ml,True,R1 -> R4 -> R6 -> R7,3,35,60,4.435,58.4521,8,19.6851
+scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,bfs,False,NONE,0,-1,-1,-1.0,-1.0,0,0.2797
+scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,dijkstra,False,NONE,0,-1,-1,-1.0,-1.0,0,0.175
+scenario_6_disconnected_destination,Complete Destination Isolation,R1,R7,ml,False,NONE,0,-1,-1,-1.0,-1.0,0,0.8192
+scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,bfs,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.383
+scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,dijkstra,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,-1.0,1,0.2471
+scenario_7_healed_restoration,Post-Healing Restoration Verification,R1,R7,ml,True,R1 -> R2 -> R5 -> R7,3,24,100,2.48,75.0592,16,18.6437

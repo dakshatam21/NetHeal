@@ -67,40 +67,33 @@ hand-chosen values. Route metrics are computed from them: latency is summed alon
 compounded, bandwidth is the bottleneck link. The trend charts use a deterministic generated series
 (`demoAnalytics.ts`). Nothing is measured from a real network.
 
-## The client-side routing demonstration
+## Testing & Quality Assurance
 
-- A link is usable only if it is not failed AND both of its routers are up. A failed router makes all its
-  links unusable but they are kept in the data so restoring the router restores them.
-- **Baseline route** = breadth-first search (shortest hop count) over usable links. Ties are broken by the order of links in `initialTopology.ts`.
-- **Alternative routes** = all simple paths (depth-first enumeration), sorted by hops then latency.
-- **Network availability** = share of router pairs that can still reach each other.
-- If BFS finds no path the UI shows DESTINATION UNREACHABLE.
+```bash
+# Run the automated Vitest unit and integration test suite
+npm test
 
-## Limitations
+# Type-check and create production build
+npm run build
+```
 
-- No backend, persistence, authentication or real-time data. Refreshing the page resets everything.
-- BFS ignores latency/loss when choosing the baseline, which is intentional: it is the "conventional" reference.
-- ML-assisted routing is not implemented; its UI shows "Awaiting backend integration".
-- Analytics values are illustrative and not experimental results.
-- The graph layout is fixed (nodes are not draggable).
+## Live Backend & ML Integration Architecture
 
-## Planned FastAPI and ML integration
+1. **Authoritative Backend Data Flow**:
+   - `loadTopology()` fetches live node and link definitions via `GET /api/network/topology`.
+   - `failRouterApi` and `restoreRouterApi` trigger graph mutations via `POST /api/network/fail/router/{id}` and `POST /api/network/restore/router/{id}`.
+   - `failLinkApi` and `restoreLinkApi` dispatch mutations via `POST /api/network/fail/link` and `POST /api/network/restore/link`.
+   - `analyzeRouteApi` queries `POST /api/routes/analyze` using the selected algorithm (`bfs`, `dijkstra`, `ml`).
+   - `compareRoutesApi` queries `POST /api/routes/compare` for candidate paths and Random Forest quality scores.
+   - `fetchExperimentResults()` and `runExperimentSuite()` execute live empirical benchmark suites via `/api/experiments/results` and `/api/experiments/run`.
+2. **Multi-Client State Synchronization**:
+   - `NetworkContext` runs periodic non-intrusive background polling to detect authoritative topology changes made by other clients or background processes.
+3. **Graceful Degraded States**:
+   - If the backend is temporarily offline, a topbar badge shows `BACKEND OFFLINE` with an interactive reconnect trigger.
+   - If the ML engine is unavailable, conventional routing (BFS and Dijkstra) continues functioning uninterrupted with informative diagnostic messages.
 
-1. Set `VITE_API_BASE_URL` in `.env` (default `http://localhost:8000`).
-2. In `networkService.ts`, replace each `TODO(FastAPI)` function with a `fetch` call:
-   - `loadTopology` → `GET /api/network/topology`
-   - `simulateNetwork` → `POST /api/network/failures` (NetworkX recomputes routes)
-   - route analysis → `GET/POST /api/routes/analysis`
-   - `getMlPrediction` → `POST /api/routes/predict` (scikit-learn model, optional XGBoost later)
-   - `getDemoAnalytics` → `GET /api/experiments/results` (Pandas/NumPy experiment output)
-3. `simulateNetwork` is synchronous today; it becomes `async` and the context awaits it. UI components do not change.
+## Scope & Operational Context
 
-These endpoints are **planned, not implemented**.
-
-## Presenting this honestly in an academic demonstration
-
-Say: "This is the frontend and interaction prototype. Topology, metrics and analytics are simulated. The
-route calculation you see is a client-side BFS baseline that shows how failure recovery will look.
-The ML-assisted routing, NetworkX simulation and real experiment results are the next phase, and the service
-layer is already shaped for that integration." Do not describe any chart value as a measured result or any
-panel as an ML prediction.
+- **Simulation Engine**: Network simulation is powered by NetworkX on the authoritative FastAPI backend.
+- **Machine Learning**: Route quality scoring is provided by a Scikit-Learn Random Forest model evaluating multi-factor SLA metrics (latency, bandwidth bottleneck, packet loss, and hops).
+- **Physical Network Boundary**: NetHeal models network layer dynamics in software for simulation, training, and benchmarking; it does not manipulate hardware physical router tables or interface firmware.

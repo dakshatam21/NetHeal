@@ -102,21 +102,19 @@ Execute the direct Python automated test runner:
 ```bash
 cd netheal-backend
 python -u run_tests.py
+# or: pytest -v tests/
 ```
-This runs 29 tests covering topology creation, node/link failure mutations, BFS/Dijkstra/ML routing algorithms, model quality predictions, REST endpoints, and experiment suites.
+This runs 37 automated tests covering topology creation, node/link failure mutations, BFS/Dijkstra/ML routing algorithms, model quality predictions, REST endpoints, edge cases, and experiment suites.
 
-Alternatively, use standard pytest:
-```bash
-pytest
-```
-
-### Frontend Type-Check & Build
-To verify TypeScript compilation:
+### Frontend Unit Tests & Build
+To run the frontend Vitest unit and integration tests:
 ```bash
 cd netheal-frontend
-npx tsc --noEmit
+npm test
 ```
-To create a production bundle:
+This runs 13 tests across `HealthCounts.test.ts` and `integration.test.ts`.
+
+To create a production bundle and run TypeScript checks:
 ```bash
 npm run build
 ```

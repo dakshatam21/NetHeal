@@ -184,7 +184,7 @@ export function RouteAnalysisPage() {
                       <td className="mono">{c.estimated_packet_loss_percent.toFixed(2)} %</td>
                       <td className="mono">{c.bottleneck_bandwidth_mbps} Mbps</td>
                       <td className="mono font-bold" style={{ color: isMaxQuality ? '#38D6B0' : '#EAF2FA' }}>
-                        {c.predicted_quality_score.toFixed(2)} / 100
+                        {c.predicted_quality_score != null ? `${c.predicted_quality_score.toFixed(2)} / 100` : '—'}
                       </td>
                       <td>
                         <span className="tag-row">

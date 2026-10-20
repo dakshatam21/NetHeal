@@ -11,6 +11,7 @@ import {
   restoreLinkApi,
   restoreRouterApi,
 } from '../services/networkService';
+import { computeHealthCounts } from '../services/routingService';
 import type {
   BackendCandidateRoute,
   BackendNetworkStatus,
@@ -88,7 +89,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const [healthStatus, setHealthStatus] = useState<BackendNetworkStatus | null>(null);
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
 
@@ -105,7 +106,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Compute live route and alternatives from backend
+  // Compute live route and alternatives from backend with isolated error handling
   const evaluateRoutes = useCallback(
     async (
       currentTopology: Topology,
@@ -114,52 +115,82 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       method: RoutingMethod
     ) => {
       try {
-        const [routeRes, compareRes] = await Promise.all([
+        const [routeResult, compareResult] = await Promise.allSettled([
           analyzeRouteApi(src, dst, method),
           compareRoutesApi(src, dst),
         ]);
 
-        const mappedMain = mapBackendRouteToResult(routeRes, currentTopology);
-        setActiveRoute(mappedMain);
-        setCandidates(compareRes.candidates || []);
+        let hasActiveSuccess = false;
 
-        // Derive alternative routes from compare response candidates
-        const altRoutes: RouteResult[] = (compareRes.candidates || []).slice(0, 6).map((c) => ({
-          path: c.path,
-          linkIds: currentTopology.links
-            .filter((l) => {
-              for (let i = 0; i < c.path.length - 1; i++) {
-                if (
-                  (l.source === c.path[i] && l.target === c.path[i + 1]) ||
-                  (l.source === c.path[i + 1] && l.target === c.path[i])
-                ) {
-                  return true;
-                }
-              }
-              return false;
-            })
-            .map((l) => l.id),
-          routingMethod: method,
-          metrics: {
-            hops: c.hops,
-            latencyMs: c.total_latency_ms,
-            packetLossPct: c.estimated_packet_loss_percent,
-            bandwidthMbps: c.bottleneck_bandwidth_mbps,
-            predictedScore: c.predicted_quality_score,
-          },
-        }));
+        if (routeResult.status === 'fulfilled') {
+          hasActiveSuccess = true;
+          const routeRes = routeResult.value;
+          const mappedMain = mapBackendRouteToResult(routeRes, currentTopology);
+          setActiveRoute(mappedMain);
 
-        setAlternatives(altRoutes);
-
-        if (!routeRes.route_found) {
-          setRouteStatus('unreachable');
-        } else if (altRoutes.length > 0 && altRoutes[0].path.join('-') === routeRes.route.join('-')) {
-          setRouteStatus('optimal');
+          if (!routeRes.route_found) {
+            setRouteStatus('unreachable');
+          } else {
+            setRouteStatus('optimal');
+          }
         } else {
-          setRouteStatus('rerouted');
+          const err = routeResult.reason;
+          const msg = err instanceof Error ? err.message : 'Route calculation failed';
+          pushToast('error', `Route analysis error: ${msg}`);
         }
 
-        setIsConnected(true);
+        if (compareResult.status === 'fulfilled') {
+          hasActiveSuccess = true;
+          const compareRes = compareResult.value;
+          setCandidates(compareRes.candidates || []);
+
+          // Derive alternative routes from compare response candidates
+          const altRoutes: RouteResult[] = (compareRes.candidates || []).slice(0, 6).map((c) => ({
+            path: c.path,
+            linkIds: currentTopology.links
+              .filter((l) => {
+                for (let i = 0; i < c.path.length - 1; i++) {
+                  if (
+                    (l.source === c.path[i] && l.target === c.path[i + 1]) ||
+                    (l.source === c.path[i + 1] && l.target === c.path[i])
+                  ) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+              .map((l) => l.id),
+            routingMethod: method,
+            metrics: {
+              hops: c.hops,
+              latencyMs: c.total_latency_ms,
+              packetLossPct: c.estimated_packet_loss_percent,
+              bandwidthMbps: c.bottleneck_bandwidth_mbps,
+              predictedScore: c.predicted_quality_score,
+            },
+          }));
+
+          setAlternatives(altRoutes);
+
+          if (routeResult.status === 'fulfilled' && routeResult.value.route_found) {
+            const mainPath = routeResult.value.route.join('-');
+            if (altRoutes.length > 0 && altRoutes[0].path.join('-') === mainPath) {
+              setRouteStatus('optimal');
+            } else {
+              setRouteStatus('rerouted');
+            }
+          }
+        } else {
+          // Compare failed (e.g. optional ML failure or server delay), but never erase successful main route!
+          console.warn('Comparison service warning:', compareResult.reason);
+        }
+
+        if (hasActiveSuccess) {
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+          pushToast('error', 'Routing service unreachable.');
+        }
       } catch (err: unknown) {
         setIsConnected(false);
         const msg = err instanceof Error ? err.message : 'Backend connection error';
@@ -455,7 +486,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     [topology, source, destination, evaluateRoutes, pushEvents]
   );
 
-  // Health counts computed from topology and failures
+  // Health counts computed from topology and failures using authoritative reachability and link status
   const counts: HealthCounts = useMemo(() => {
     if (!topology) {
       return {
@@ -470,43 +501,34 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         avgLatencyMs: null,
       };
     }
-
-    const rTotal = topology.routers.length;
-    const rFailed = failures.routers.length;
-    const rActive = Math.max(0, rTotal - rFailed);
-
-    const lTotal = topology.links.length;
-    const lFailed = failures.links.length;
-    const lActive = Math.max(0, lTotal - lFailed);
-
-    const degradedLinks = topology.links.filter(
-      (l) => !failures.links.includes(l.id) && (failures.routers.includes(l.source) || failures.routers.includes(l.target))
-    ).length;
-
-    const healthyLinks = Math.max(0, lActive - degradedLinks);
-    const availabilityPct = rTotal > 0 ? Math.round((rActive / rTotal) * 100) : 100;
-
-    const activeLinkLatencies = topology.links
-      .filter((l) => !failures.links.includes(l.id) && !failures.routers.includes(l.source) && !failures.routers.includes(l.target))
-      .map((l) => l.latencyMs);
-
-    const avgLatencyMs =
-      activeLinkLatencies.length > 0
-        ? Math.round((activeLinkLatencies.reduce((a, b) => a + b, 0) / activeLinkLatencies.length) * 10) / 10
-        : null;
-
-    return {
-      routersTotal: rTotal,
-      routersActive: rActive,
-      linksTotal: lTotal,
-      linksActive: lActive,
-      healthy: healthyLinks,
-      degraded: degradedLinks,
-      failed: rFailed + lFailed,
-      availabilityPct,
-      avgLatencyMs,
-    };
+    return computeHealthCounts(topology, failures);
   }, [topology, failures]);
+
+  // Multi-client synchronization: non-intrusive background polling every 6 seconds
+  useEffect(() => {
+    if (!isConnected || isLoading) return;
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await loadTopology();
+        const serverFailedR = fresh.routers.filter((r) => r.status === 'failed').map((r) => r.id);
+        const serverFailedL = fresh.links.filter((l) => l.status === 'failed').map((l) => l.id);
+
+        const currentRStr = failures.routers.slice().sort().join(',');
+        const serverRStr = serverFailedR.slice().sort().join(',');
+        const currentLStr = failures.links.slice().sort().join(',');
+        const serverLStr = serverFailedL.slice().sort().join(',');
+
+        if (currentRStr !== serverRStr || currentLStr !== serverLStr) {
+          setFailures({ routers: serverFailedR, links: serverFailedL });
+          setTopology(fresh);
+          evaluateRoutes(fresh, source, destination, routingMethod);
+        }
+      } catch {
+        // Suppress non-blocking background polling errors
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isConnected, isLoading, failures, source, destination, routingMethod, evaluateRoutes]);
 
   const snapshot: SimulationSnapshot = useMemo(
     () => ({

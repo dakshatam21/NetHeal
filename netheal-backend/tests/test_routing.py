@@ -79,3 +79,45 @@ def test_compare_routes(fresh_network):
     assert comp["dijkstra"]["route_found"] is True
     assert comp["ml"]["route_found"] is True
     assert comp["total_feasible_candidates"] >= 1
+
+
+def test_same_source_and_destination(fresh_network):
+    """
+    When source and destination are identical, hops must be 0 and latency 0.0 ms.
+    """
+    for method in ["bfs", "dijkstra", "ml"]:
+        res = find_route(fresh_network, "R2", "R2", method=method)
+        assert res["route_found"] is True
+        assert res["route"] == ["R2"]
+        assert res["hops"] == 0
+        assert res["total_latency_ms"] == 0.0
+
+
+def test_compare_routes_same_source_and_destination(fresh_network):
+    comp = compare_routes(fresh_network, "R3", "R3")
+    assert comp["bfs"]["route"] == ["R3"]
+    assert comp["total_feasible_candidates"] == 1
+    assert comp["candidates"][0]["path"] == ["R3"]
+    assert comp["candidates"][0]["hops"] == 0
+
+
+def test_ml_routing_graceful_fallback(fresh_network):
+    """
+    When ML inference raises an exception, find_route must fall back to Dijkstra
+    rather than crashing, preserving connectivity.
+    """
+    from unittest.mock import patch
+    import services.ml_service as ml_mod
+
+    with patch.object(ml_mod, "predict_route_qualities", side_effect=RuntimeError("Simulated ML model failure")):
+        res = find_route(fresh_network, "R1", "R7", method="ml")
+        assert res["route_found"] is True
+        assert len(res["route"]) >= 2
+        assert res["predicted_quality_score"] is None
+        assert "ML model unavailable" in res["message"]
+
+        # compare_routes must also succeed for BFS and Dijkstra
+        comp = compare_routes(fresh_network, "R1", "R7")
+        assert comp["bfs"]["route_found"] is True
+        assert comp["dijkstra"]["route_found"] is True
+
