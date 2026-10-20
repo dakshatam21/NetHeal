@@ -1,6 +1,6 @@
 # NetHeal — AI-Powered Self-Healing Network Simulator
 
-[![Backend Tests: 37 Passed](https://img.shields.io/badge/backend%20tests-37%20passed-brightgreen)](#automated-testing)
+[![Backend Tests: 38 Passed](https://img.shields.io/badge/backend%20tests-38%20passed-brightgreen)](#automated-testing)
 [![Frontend Tests: 13 Passed](https://img.shields.io/badge/frontend%20tests-13%20passed-brightgreen)](#automated-testing)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-strict-blue)](#prerequisites--tech-stack)
 [![FastAPI: 0.115+](https://img.shields.io/badge/FastAPI-0.115%2B-teal)](#prerequisites--tech-stack)
@@ -117,15 +117,15 @@ npm run dev
 
 ## 7. Automated Testing
 
-### Backend Unit & Integration Tests (37 Tests)
+### Backend Unit & Integration Tests (38 Tests)
 Execute the direct automated test suite or pytest:
 ```bash
 cd netheal-backend
 python -u run_tests.py
 # or: pytest -v tests/
 ```
-- **Outcome**: **37 / 37 passed (100% pass rate)**.
-- Covers topology creation, node/link failures, BFS/Dijkstra/ML routing, quality inference, edge cases (same source-destination, disconnected nodes, ML fallback), REST API endpoints, and experiment runners.
+- **Outcome**: **38 / 38 passed (100% pass rate)**.
+- Covers topology creation, node/link failures, BFS/Dijkstra/ML routing, quality inference, edge cases (same source-destination, disconnected nodes, ML fallback), REST API endpoints, routing method normalization, and experiment runners.
 
 ### Frontend Unit & Integration Tests (13 Tests)
 ```bash
@@ -159,13 +159,13 @@ NetHeal provides a repeatable benchmark suite executing BFS, Dijkstra, and ML ro
 
 | Scenario | Algorithm | Route Found | Selected Path | Latency | ML Score | Exec Time |
 |---|---|---|---|---|---|---|
-| **1. Normal** | ML | Yes | `R1 -> R2 -> R5 -> R7` | 24 ms | **91.24** | 0.65 ms |
-| **2. Link Failure (R5-R7)** | ML | Yes | `R1 -> R3 -> R6 -> R7` | 26 ms | **88.42** | 0.61 ms |
-| **3. Router Failure (R2)** | ML | Yes | `R1 -> R3 -> R5 -> R7` | 25 ms | **89.70** | 0.63 ms |
-| **4. Multi-Failure** | ML | Yes | `R1 -> R3 -> R6 -> R7` | 26 ms | **88.42** | 0.62 ms |
-| **5. Bottleneck Diversion** | ML | Yes | `R1 -> R3 -> R6 -> R7` | 26 ms | **88.42** | 0.64 ms |
-| **6. Disconnected** | ML | **No** | None | — | — | 0.14 ms |
-| **7. Healed Restoration** | ML | Yes | `R1 -> R2 -> R5 -> R7` | 24 ms | **91.24** | 0.60 ms |
+| **1. Normal** | ML | Yes | `R1 -> R2 -> R5 -> R7` | 24 ms | **75.06** | ~15.34 ms |
+| **2. Link Failure (R2-R5)** | ML | Yes | `R1 -> R3 -> R5 -> R7` | 27 ms | **64.46** | ~12.37 ms |
+| **3. Router Failure (R3)** | ML | Yes | `R1 -> R2 -> R5 -> R7` | 24 ms | **75.06** | ~11.82 ms |
+| **4. Multi-Failure (R3, R1-R2)** | ML | Yes | `R1 -> R4 -> R6 -> R7` | 35 ms | **58.45** | ~10.36 ms |
+| **5. Bottleneck Diversion (R5-R7)** | ML | Yes | `R1 -> R4 -> R6 -> R7` | 35 ms | **58.45** | ~13.13 ms |
+| **6. Disconnected** | ML | **No** | None | — | — | ~0.48 ms |
+| **7. Healed Restoration** | ML | Yes | `R1 -> R2 -> R5 -> R7` | 24 ms | **75.06** | ~12.60 ms |
 
 Detailed tables and comparative analysis are available in [`docs/EXPERIMENTS_AND_RESULTS.md`](docs/EXPERIMENTS_AND_RESULTS.md).
 

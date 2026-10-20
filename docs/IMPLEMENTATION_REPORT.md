@@ -117,14 +117,14 @@ The NetHeal project has been transitioned from a disconnected, partially mocked 
 
 ## 5. Verification Commands & Actual Results
 
-### Backend Automated Test Suite (37 Tests)
+### Backend Automated Test Suite (38 Tests)
 ```bash
 cd netheal-backend
 python -u run_tests.py
 # or: pytest -v tests/
 ```
-- **Outcome**: **37 of 37 tests passed (100% pass rate)**.
-- Covers topology creation, node/link failure mutations, operational link deductions, BFS/Dijkstra/ML routing algorithms, graceful ML fallback, identical source-destination routing, REST API 400/404/readiness validations, and experiment suites.
+- **Outcome**: **38 of 38 tests passed (100% pass rate)**.
+- Covers topology creation, node/link failure mutations, operational link deductions, BFS/Dijkstra/ML routing algorithms, routing method normalization, graceful ML fallback, identical source-destination routing, REST API 400/404/readiness validations, and experiment suites.
 
 ### Frontend Unit & Integration Tests (13 Tests)
 ```bash

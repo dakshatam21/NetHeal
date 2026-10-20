@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-20 12:26:08 UTC",
+  "timestamp": "2026-10-20 13:02:57 UTC",
   "total_scenarios": 7,
   "scenarios": [
     {
@@ -24,7 +24,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.3051,
+          "execution_time_ms": 0.2864,
           "message": null
         },
         "dijkstra": {
@@ -42,7 +42,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.3192,
+          "execution_time_ms": 0.3753,
           "message": null
         },
         "ml": {
@@ -60,7 +60,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": 75.0592,
           "candidate_routes_evaluated": 16,
-          "execution_time_ms": 22.7832,
+          "execution_time_ms": 16.2227,
           "message": null
         }
       }
@@ -87,7 +87,7 @@
           "estimated_packet_loss_percent": 4.44,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2242,
+          "execution_time_ms": 0.1476,
           "message": null
         },
         "dijkstra": {
@@ -105,7 +105,7 @@
           "estimated_packet_loss_percent": 4.44,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.1982,
+          "execution_time_ms": 0.2332,
           "message": null
         },
         "ml": {
@@ -123,7 +123,7 @@
           "estimated_packet_loss_percent": 4.44,
           "predicted_quality_score": 64.4585,
           "candidate_routes_evaluated": 10,
-          "execution_time_ms": 30.7163,
+          "execution_time_ms": 12.9239,
           "message": null
         }
       }
@@ -150,7 +150,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2457,
+          "execution_time_ms": 0.1546,
           "message": null
         },
         "dijkstra": {
@@ -168,7 +168,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.212,
+          "execution_time_ms": 0.1536,
           "message": null
         },
         "ml": {
@@ -186,7 +186,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": 75.0592,
           "candidate_routes_evaluated": 2,
-          "execution_time_ms": 26.0518,
+          "execution_time_ms": 19.9509,
           "message": null
         }
       }
@@ -213,7 +213,7 @@
           "estimated_packet_loss_percent": 4.435,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2091,
+          "execution_time_ms": 0.1278,
           "message": null
         },
         "dijkstra": {
@@ -231,7 +231,7 @@
           "estimated_packet_loss_percent": 4.435,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.314,
+          "execution_time_ms": 0.1516,
           "message": null
         },
         "ml": {
@@ -249,7 +249,7 @@
           "estimated_packet_loss_percent": 4.435,
           "predicted_quality_score": 58.4521,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 18.6603,
+          "execution_time_ms": 12.7924,
           "message": null
         }
       }
@@ -276,7 +276,7 @@
           "estimated_packet_loss_percent": 6.361,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2501,
+          "execution_time_ms": 0.1736,
           "message": null
         },
         "dijkstra": {
@@ -294,7 +294,7 @@
           "estimated_packet_loss_percent": 4.435,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2554,
+          "execution_time_ms": 0.4074,
           "message": null
         },
         "ml": {
@@ -312,7 +312,7 @@
           "estimated_packet_loss_percent": 4.435,
           "predicted_quality_score": 58.4521,
           "candidate_routes_evaluated": 8,
-          "execution_time_ms": 19.6851,
+          "execution_time_ms": 13.7433,
           "message": null
         }
       }
@@ -334,7 +334,7 @@
           "estimated_packet_loss_percent": null,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 0,
-          "execution_time_ms": 0.2797,
+          "execution_time_ms": 0.152,
           "message": "No usable route exists between the routers."
         },
         "dijkstra": {
@@ -347,7 +347,7 @@
           "estimated_packet_loss_percent": null,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 0,
-          "execution_time_ms": 0.175,
+          "execution_time_ms": 0.13,
           "message": "No usable route exists between the routers."
         },
         "ml": {
@@ -360,7 +360,7 @@
           "estimated_packet_loss_percent": null,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 0,
-          "execution_time_ms": 0.8192,
+          "execution_time_ms": 0.5779,
           "message": "No usable route exists between the routers."
         }
       }
@@ -387,7 +387,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.383,
+          "execution_time_ms": 0.1577,
           "message": null
         },
         "dijkstra": {
@@ -405,7 +405,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": null,
           "candidate_routes_evaluated": 1,
-          "execution_time_ms": 0.2471,
+          "execution_time_ms": 0.2303,
           "message": null
         },
         "ml": {
@@ -423,7 +423,7 @@
           "estimated_packet_loss_percent": 2.48,
           "predicted_quality_score": 75.0592,
           "candidate_routes_evaluated": 16,
-          "execution_time_ms": 18.6437,
+          "execution_time_ms": 12.5127,
           "message": null
         }
       }
@@ -436,7 +436,7 @@
       "avg_bandwidth_mbps": 81.67,
       "avg_packet_loss_pct": 3.78,
       "avg_quality_score": null,
-      "avg_execution_time_ms": 0.2695,
+      "avg_execution_time_ms": 0.1746,
       "success_rate_pct": 85.7
     },
     "dijkstra": {
@@ -445,7 +445,7 @@
       "avg_bandwidth_mbps": 81.67,
       "avg_packet_loss_pct": 3.46,
       "avg_quality_score": null,
-      "avg_execution_time_ms": 0.2576,
+      "avg_execution_time_ms": 0.2586,
       "success_rate_pct": 85.7
     },
     "ml": {
@@ -454,7 +454,7 @@
       "avg_bandwidth_mbps": 81.67,
       "avg_packet_loss_pct": 3.46,
       "avg_quality_score": 67.76,
-      "avg_execution_time_ms": 22.7567,
+      "avg_execution_time_ms": 14.691,
       "success_rate_pct": 85.7
     }
   }

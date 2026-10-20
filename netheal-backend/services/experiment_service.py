@@ -154,6 +154,12 @@ def run_single_experiment(scenario: Dict[str, Any]) -> Dict[str, Any]:
 
 def run_all_experiments() -> Dict[str, Any]:
     """Execute the full experimental test suite and persist results to disk."""
+    from services.ml_service import load_model
+    try:
+        load_model()
+    except Exception:
+        pass
+
     records = []
     scenario_outputs = []
 

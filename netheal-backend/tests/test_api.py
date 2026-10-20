@@ -122,3 +122,15 @@ def test_api_health_subsystem_readiness(api_client):
     assert data["ml_model_loaded"] is True
     assert data["ml_error"] is None
 
+
+def test_api_analyze_method_normalization(api_client):
+    for raw_method, expected in [("BFS", "bfs"), ("Dijkstra", "dijkstra"), ("  ml  ", "ml"), ("DiJkStRa", "dijkstra")]:
+        res = api_client.post(
+            "/api/routes/analyze",
+            json={"source": "R1", "destination": "R7", "method": raw_method},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["route_found"] is True
+        assert data["routing_method"] == expected
+

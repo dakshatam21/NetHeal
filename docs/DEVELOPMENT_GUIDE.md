@@ -104,7 +104,7 @@ cd netheal-backend
 python -u run_tests.py
 # or: pytest -v tests/
 ```
-This runs 37 automated tests covering topology creation, node/link failure mutations, BFS/Dijkstra/ML routing algorithms, model quality predictions, REST endpoints, edge cases, and experiment suites.
+This runs 38 automated tests covering topology creation, node/link failure mutations, BFS/Dijkstra/ML routing algorithms, routing method normalization, model quality predictions, REST endpoints, edge cases, and experiment suites.
 
 ### Frontend Unit Tests & Build
 To run the frontend Vitest unit and integration tests:

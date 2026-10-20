@@ -23,12 +23,12 @@ python -u run_tests.py
 =================================================================
 NETHEAL AUTOMATED BACKEND TEST SUITE
 =================================================================
-Total Tests Executed: 37
-Passed:              37
+Total Tests Executed: 38
+Passed:              38
 Failed:              0
 Skipped:             0
 Pass Rate:           100.0%
-Total Duration:      0.06s (warm) / 33.18s (cold)
+Total Duration:      3.72s (warm) / 4.50s (pytest)
 =================================================================
 ```
 

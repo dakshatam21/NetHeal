@@ -221,7 +221,8 @@ def analyze_route(request: RouteRequest):
             raise HTTPException(status_code=404, detail=f"Source router '{request.source}' does not exist.")
         if request.destination not in network:
             raise HTTPException(status_code=404, detail=f"Destination router '{request.destination}' does not exist.")
-        if request.method.lower() not in {"bfs", "dijkstra", "ml"}:
+        normalized_method = request.method.strip().lower()
+        if normalized_method not in {"bfs", "dijkstra", "ml"}:
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported routing method '{request.method}'. Choose 'bfs', 'dijkstra', or 'ml'.",
@@ -232,7 +233,7 @@ def analyze_route(request: RouteRequest):
                 network,
                 request.source,
                 request.destination,
-                request.method,
+                normalized_method,
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error))

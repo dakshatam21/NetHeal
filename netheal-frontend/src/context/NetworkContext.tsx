@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   analyzeRouteApi,
@@ -93,6 +93,8 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
 
+  const lastMutationTimeRef = useRef<number>(0);
+
   const pushEvents = useCallback((entries: NetworkEvent[]) => {
     setEvents((prev) => [...[...entries].reverse(), ...prev].slice(0, 50));
   }, []);
@@ -113,7 +115,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       src: string,
       dst: string,
       method: RoutingMethod
-    ) => {
+    ): Promise<boolean> => {
       try {
         const [routeResult, compareResult] = await Promise.allSettled([
           analyzeRouteApi(src, dst, method),
@@ -187,14 +189,17 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
 
         if (hasActiveSuccess) {
           setIsConnected(true);
+          return true;
         } else {
           setIsConnected(false);
           pushToast('error', 'Routing service unreachable.');
+          return false;
         }
       } catch (err: unknown) {
         setIsConnected(false);
         const msg = err instanceof Error ? err.message : 'Backend connection error';
         pushToast('error', `Routing analysis failed: ${msg}`);
+        return false;
       }
     },
     [pushToast]
@@ -215,7 +220,16 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       const failedL = topo.links.filter((l) => l.status === 'failed').map((l) => l.id);
       setFailures({ routers: failedR, links: failedL });
 
-      await evaluateRoutes(topo, topo.defaultSource, topo.defaultDestination, routingMethod);
+      const routeSuccess = await evaluateRoutes(topo, topo.defaultSource, topo.defaultDestination, routingMethod);
+
+      if (!routeSuccess) {
+        setIsConnected(false);
+        setLoadError('Failed to initialize active routes from backend.');
+        setEvents([
+          makeEvent('warning', 'Topology loaded, but initial route evaluation failed. Check backend status.'),
+        ]);
+        return;
+      }
 
       setEvents([
         makeEvent('success', `Live backend connected: ${topo.routers.length} routers, ${topo.links.length} links loaded.`),
@@ -239,6 +253,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const failRouter = useCallback(
     async (id: string) => {
       if (!topology) return;
+      lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
         const res = await failRouterApi(id);
@@ -276,6 +291,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const restoreRouter = useCallback(
     async (id: string) => {
       if (!topology) return;
+      lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
         const res = await restoreRouterApi(id);
@@ -333,6 +349,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         return;
       }
       const [u, v] = endpoints;
+      lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
         const res = await failLinkApi(u, v);
@@ -375,6 +392,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         return;
       }
       const [u, v] = endpoints;
+      lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
         const res = await restoreLinkApi(u, v);
@@ -410,6 +428,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   // Clear all failures
   const clearFailures = useCallback(async () => {
     if (!topology) return;
+    lastMutationTimeRef.current = Date.now();
     setIsLoading(true);
     try {
       await resetNetworkApi();
@@ -429,6 +448,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
 
   // Reset entire simulation
   const resetSimulation = useCallback(async () => {
+    lastMutationTimeRef.current = Date.now();
     setIsLoading(true);
     try {
       await resetNetworkApi();
@@ -508,6 +528,9 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isConnected || isLoading) return;
     const interval = setInterval(async () => {
+      if (Date.now() - lastMutationTimeRef.current < 4000) {
+        return;
+      }
       try {
         const fresh = await loadTopology();
         const serverFailedR = fresh.routers.filter((r) => r.status === 'failed').map((r) => r.id);
@@ -519,6 +542,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         const serverLStr = serverFailedL.slice().sort().join(',');
 
         if (currentRStr !== serverRStr || currentLStr !== serverLStr) {
+          if (Date.now() - lastMutationTimeRef.current < 4000) return;
           setFailures({ routers: serverFailedR, links: serverFailedL });
           setTopology(fresh);
           evaluateRoutes(fresh, source, destination, routingMethod);

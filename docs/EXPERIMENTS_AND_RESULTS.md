@@ -18,61 +18,60 @@ All experiments were executed using `netheal-backend/services/experiment_service
 
 1. **Scenario 1 — Normal Healthy Topology**:
    - All 7 routers and 11 links active. Path: `R1` to `R7`.
-2. **Scenario 2 — Single Link Failure (R5-R7)**:
-   - Primary high-capacity link to destination failed. Tests dynamic diversion to `R6-R7`.
-3. **Scenario 3 — Core Transit Router Failure (R2)**:
-   - Central router `R2` offline. Tests rerouting traffic through `R3` and `R4`.
-4. **Scenario 4 — Multiple Component Failures (R2 and Link R3-R5)**:
-   - Constrained topology with surviving path via `R1 -> R3 -> R6 -> R7`.
-5. **Scenario 5 — High Latency Bottleneck Diversion**:
-   - Compares path selection when low-hop paths incur higher latency or lower capacity.
-6. **Scenario 6 — Disconnected Destination (Partition)**:
-   - Both links into `R7` (`R5-R7` and `R6-R7`) failed. Tests graceful handling of unreachable states.
-7. **Scenario 7 — Healed Restoration**:
-   - Restoration of previously failed components, verifying automatic recovery of optimal paths.
+2. **Scenario 2 — Primary Link Failure (R2-R5)**:
+   - Core link between `R2` and `R5` fails. Traffic reroutes via `R3` (`R1 -> R3 -> R5 -> R7`).
+3. **Scenario 3 — Central Transit Router Failure (R3)**:
+   - Transit router `R3` offline, severing 5 incident links. Path traverses `R1 -> R2 -> R5 -> R7`.
+4. **Scenario 4 — Multiple Critical Failures (R3 and Link R1-R2)**:
+   - Transit router `R3` and link `R1-R2` fail simultaneously. Surviving path via `R1 -> R4 -> R6 -> R7`.
+5. **Scenario 5 — Low-Latency High-Loss Tradeoff (Link R5-R7 Failure)**:
+   - Core link `R5-R7` fails. Algorithms navigate between `R1-R3-R6-R7` and `R1-R4-R6-R7`.
+6. **Scenario 6 — Complete Destination Isolation (Partition)**:
+   - Both ingress links into `R7` (`R5-R7` and `R6-R7`) failed. Tests graceful handling of unreachable states.
+7. **Scenario 7 — Post-Healing Restoration Verification**:
+   - Restoration of previously failed link `R2-R5`, verifying automatic recovery of optimal baseline route.
 
 ---
 
 ## 3. Empirical Results Table
 
-*Source: `netheal-backend/results/experiment_results.csv` generated on local test run.*
+*Source: `netheal-backend/results/experiment_results.csv` generated from live execution of `run_all_experiments()`.*
 
 | Scenario | Algorithm | Route Found | Selected Path | Hops | Latency (ms) | Bandwidth (Mbps) | Loss (%) | ML Score | Exec Time (ms) |
 |---|---|---|---|---|---|---|---|---|---|
-| **1. Normal** | BFS | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | — | 0.42 ms |
-| | Dijkstra | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | — | 0.39 ms |
-| | ML | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | **91.24** | 0.65 ms |
-| **2. Link Failure (R5-R7)** | BFS | Yes | `R1 -> R2 -> R5 -> R6 -> R7` | 4 | 27 | 1000 | 0.06% | — | 0.38 ms |
-| | Dijkstra | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | — | 0.41 ms |
-| | ML | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | **88.42** | 0.61 ms |
-| **3. Router Failure (R2)** | BFS | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 25 | 1000 | 0.06% | — | 0.45 ms |
-| | Dijkstra | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 25 | 1000 | 0.06% | — | 0.40 ms |
-| | ML | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 25 | 1000 | 0.06% | **89.70** | 0.63 ms |
-| **4. Multi-Failure (R2, R3-R5)** | BFS | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | — | 0.41 ms |
-| | Dijkstra | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | — | 0.38 ms |
-| | ML | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | **88.42** | 0.62 ms |
-| **5. Bottleneck Diversion** | BFS | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 36 | 100 | 0.32% | — | 0.39 ms |
-| | Dijkstra | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | — | 0.39 ms |
-| | ML | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 26 | 1000 | 0.07% | **88.42** | 0.64 ms |
-| **6. Disconnected** | BFS | **No** | None | — | — | — | — | — | 0.12 ms |
-| | Dijkstra | **No** | None | — | — | — | — | — | 0.11 ms |
-| | ML | **No** | None | — | — | — | — | — | 0.14 ms |
-| **7. Healed Restoration** | BFS | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | — | 0.40 ms |
-| | Dijkstra | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | — | 0.37 ms |
-| | ML | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 1000 | 0.05% | **91.24** | 0.60 ms |
+| **1. Normal** | BFS | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.90 ms |
+| | Dijkstra | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.42 ms |
+| | ML | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | **75.06** | ~15.34 ms |
+| **2. Link Failure (R2-R5)** | BFS | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 27 | 70 | 4.44% | — | ~0.15 ms |
+| | Dijkstra | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 27 | 70 | 4.44% | — | ~0.15 ms |
+| | ML | Yes | `R1 -> R3 -> R5 -> R7` | 3 | 27 | 70 | 4.44% | **64.46** | ~12.37 ms |
+| **3. Router Failure (R3)** | BFS | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.12 ms |
+| | Dijkstra | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.12 ms |
+| | ML | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | **75.06** | ~11.82 ms |
+| **4. Multi-Failure (R3, R1-R2)** | BFS | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 35 | 60 | 4.44% | — | ~0.11 ms |
+| | Dijkstra | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 35 | 60 | 4.44% | — | ~0.15 ms |
+| | ML | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 35 | 60 | 4.44% | **58.45** | ~10.36 ms |
+| **5. Bottleneck Diversion (R5-R7)** | BFS | Yes | `R1 -> R3 -> R6 -> R7` | 3 | 36 | 60 | 6.36% | — | ~0.12 ms |
+| | Dijkstra | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 35 | 60 | 4.44% | — | ~0.13 ms |
+| | ML | Yes | `R1 -> R4 -> R6 -> R7` | 3 | 35 | 60 | 4.44% | **58.45** | ~13.13 ms |
+| **6. Disconnected** | BFS | **No** | None | — | — | — | — | — | ~0.13 ms |
+| | Dijkstra | **No** | None | — | — | — | — | — | ~0.12 ms |
+| | ML | **No** | None | — | — | — | — | — | ~0.48 ms |
+| **7. Healed Restoration** | BFS | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.12 ms |
+| | Dijkstra | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | — | ~0.15 ms |
+| | ML | Yes | `R1 -> R2 -> R5 -> R7` | 3 | 24 | 100 | 2.48% | **75.06** | ~12.60 ms |
 
 ---
 
 ## 4. Key Observations & Analysis
 
-1. **Failure Divergence (Scenario 2)**:
-   - When link `R5-R7` fails, BFS chooses the path traversing `R5` (`R1-R2-R5-R6-R7`) because it evaluates by hop progression from the initial source queue.
-   - Dijkstra and ML identify the superior 3-hop, 26ms route via `R1-R3-R6-R7`.
-2. **Bottleneck Vulnerability (Scenario 5)**:
-   - In topologies with asymmetric links (e.g., `R1-R4` at 100 Mbps), BFS may pick lower-capacity links if hop count is equivalent.
-   - ML-assisted routing reliably rejects paths with bottleneck capacity drops or high packet loss due to the quality penalty terms.
-3. **Execution Runtime Overhead**:
-   - BFS and Dijkstra execute in **~0.38–0.45 ms**.
-   - Vectorized ML candidate scoring executes in **~0.60–0.65 ms**, adding only ~0.2 ms overhead for multi-path SLA ranking.
+1. **Failure Divergence & Rerouting (Scenario 2 & 5)**:
+   - When core link `R2-R5` fails, traffic seamlessly diverts through `R1-R3-R5-R7` (27 ms latency, 64.46 ML score).
+   - In Scenario 5 (link `R5-R7` failed), BFS selects `R1-R3-R6-R7` (36 ms latency, 6.36% loss) due to graph exploration order, whereas Dijkstra and ML select the lower latency and lower loss path `R1-R4-R6-R7` (35 ms latency, 4.44% loss).
+2. **Quality Score Sensitivity**:
+   - The Random Forest quality score ranges from **75.06** under nominal operating conditions down to **58.45** under multiple simultaneous failures, accurately reflecting degraded QoS.
+3. **Execution Runtime Performance**:
+   - Single-path conventional graph searches (BFS, Dijkstra) execute in **sub-millisecond time (~0.11–0.90 ms)**.
+   - Vectorized ML candidate scoring evaluates all simple paths and generates predictions in **~10–15 ms**, providing high-throughput candidate ranking without server lag.
 4. **Graceful Disconnection Handling (Scenario 6)**:
-   - When destination `R7` is partitioned, all three algorithms promptly return `route_found = False` without runtime exceptions or fabricated paths.
+   - When destination `R7` is partitioned by isolating its ingress links, all three algorithms promptly return `route_found = False` without runtime exceptions or fabricated paths.

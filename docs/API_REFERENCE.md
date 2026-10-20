@@ -183,6 +183,7 @@ The NetHeal backend exposes a RESTful HTTP API on port 8000. All request and res
 
 ### `POST /api/routes/analyze`
 - **Description**: Calculates a route between source and destination using the specified algorithm (`bfs`, `dijkstra`, or `ml`).
+- **Method Normalization**: Accepts case-insensitive inputs and trims surrounding whitespace (e.g., `"BFS"`, `"bfs"`, `"  Dijkstra  "`, `"dijkstra"`, `"ML"`, `"ml"`). Unsupported methods return `400 Bad Request`.
 - **Request Body**:
 ```json
 {
