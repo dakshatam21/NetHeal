@@ -1,3 +1,4 @@
+import os
 import threading
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -51,18 +52,25 @@ app = FastAPI(
 )
 
 # CORS configuration supporting standard Vite and local dev environments
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+]
+vercel_origin = os.getenv("VERCEL_FRONTEND_ORIGIN", "").strip().rstrip("/")
+if vercel_origin:
+    for origin in [o.strip().rstrip("/") for o in vercel_origin.split(",") if o.strip()]:
+        if origin not in allowed_origins:
+            allowed_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

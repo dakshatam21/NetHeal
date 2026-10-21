@@ -20,6 +20,9 @@ python -u run_tests.py
 - **Interactive API Documentation (Swagger)**: `http://127.0.0.1:8000/docs`
 - **Health Check**: `http://127.0.0.1:8000/api/health`
 
+### Environment Variables
+- `VERCEL_FRONTEND_ORIGIN` (Optional): The live origin URL of your deployed frontend (e.g. `https://my-app.vercel.app`). Automatically permitted in CORS alongside standard localhost dev ports.
+
 ---
 
 ## Subsystem Architecture
