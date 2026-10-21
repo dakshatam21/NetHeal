@@ -31,7 +31,9 @@ npm run build      # type-checks (tsc -b) and creates a production build in dist
 npm run preview    # serves the production build locally
 ```
 
-Optional: copy `.env.example` to `.env` to set `VITE_API_BASE_URL`. The app works without it.
+Optional: copy `.env.example` to `.env` to set `VITE_API_BASE_URL`.
+- In development (`npm run dev`), it defaults to `http://localhost:8000`. If local backend is offline or unreachable, it automatically falls back to `https://netheal-backend.onrender.com`.
+- In production builds (`npm run build`), it automatically targets `https://netheal-backend.onrender.com` by default.
 
 ## Directory structure
 
@@ -42,7 +44,8 @@ src/
 ├── types/network.ts           all shared TypeScript types
 ├── data/                      initialTopology.ts (graph + link metrics), demoAnalytics.ts (chart data)
 ├── services/
-│   ├── networkService.ts      the ONLY data/simulation API the UI uses (future FastAPI integration point)
+│   ├── api.ts                 API client with automatic fallback (localhost:8000 -> Render)
+│   ├── networkService.ts      FastAPI backend integration endpoints & status sync
 │   └── routingService.ts      pure graph code: BFS, alternative routes, health counts
 ├── context/NetworkContext.tsx shared simulation state and actions
 ├── components/                layout/, network/, common/
@@ -56,7 +59,7 @@ src/
 | Topology (routers, links, per-link latency/bandwidth/loss, default source/destination) | `src/data/initialTopology.ts` |
 | Simulation behaviour (fail/restore rules, events, toasts, reset) | `src/context/NetworkContext.tsx` |
 | Routing algorithm and metrics | `src/services/routingService.ts` |
-| Backend integration points and API base URL | `src/services/networkService.ts` |
+| Backend integration points & API base URL / fallback | `src/services/api.ts` & `src/services/networkService.ts` |
 | Analytics demo data | `src/data/demoAnalytics.ts` |
 | Colours, fonts, spacing tokens | `src/styles/global.css` (`:root` variables) |
 

@@ -82,7 +82,9 @@ NetHeal/
    npm install
    ```
 3. (Optional) Configure API URL:
-   Copy `.env.example` to `.env`. By default, Vite proxies requests to `http://localhost:8000`.
+   Copy `.env.example` to `.env`.
+   - By default in development, the frontend targets `http://localhost:8000`. If local backend is offline or unreachable, it automatically falls back to `https://netheal-backend.onrender.com`.
+   - In production builds, it defaults directly to `https://netheal-backend.onrender.com`.
    ```
    VITE_API_BASE_URL=http://localhost:8000
    ```

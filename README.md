@@ -112,6 +112,7 @@ npm install
 npm run dev
 ```
 - Interactive Dashboard: `http://localhost:5173`
+- Backend Connection: The frontend connects to `http://localhost:8000` by default. If the local backend is offline or in production deployment, it automatically falls back to `https://netheal-backend.onrender.com` (configurable via `VITE_API_BASE_URL`).
 
 ---
 
