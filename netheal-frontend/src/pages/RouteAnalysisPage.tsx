@@ -208,26 +208,24 @@ export function RouteAnalysisPage() {
         </p>
       </Panel>
 
-      <section className="ml-placeholder" aria-label="ML-assisted routing live details" style={{ borderColor: '#38D6B0' }}>
+      <section className="ml-placeholder" aria-label="ML-assisted routing details" style={{ borderColor: '#38D6B0' }}>
         <div className="ml-placeholder__head">
           <Cpu size={18} style={{ color: '#38D6B0' }} />
           <h2 style={{ color: '#38D6B0' }}>ML-ASSISTED ROUTING ENGINE — ACTIVE & INTEGRATED</h2>
         </div>
-        <p style={{ color: '#C8D8E6', fontSize: '0.9rem' }}>
-          Real Random Forest regression model loaded from <code>route_quality_model.pkl</code> ($R^2 = 0.998$). Inference runs server-side on all simple paths up to cutoff length.
-        </p>
         <dl className="kv">
           <dt>Model Architecture</dt>
-          <dd style={{ color: '#EAF2FA' }}>Random Forest Regressor (100 Estimators, GroupShuffleSplit)</dd>
-          <dt>Candidate Paths Evaluated</dt>
-          <dd className="mono" style={{ color: '#EAF2FA' }}>{candidates.length} paths analyzed</dd>
-          <dt>Active Recommended Route</dt>
-          <dd style={{ color: '#36D6F5' }}>{route ? route.path.join(' → ') : 'Unreachable'}</dd>
-          <dt>Predicted Quality Score</dt>
-          <dd className="mono" style={{ color: '#38D6B0' }}>
-            {route?.metrics.predictedScore !== undefined && route.metrics.predictedScore !== null
-              ? `${route.metrics.predictedScore.toFixed(2)} / 100`
-              : 'N/A'}
+          <dd style={{ color: '#EAF2FA' }}>Random Forest Regressor (100 Estimators)</dd>
+          <dt>Model Accuracy</dt>
+          <dd className="mono" style={{ color: '#38D6B0', fontWeight: 600 }}>R² = 0.998</dd>
+          <dt>Model Features</dt>
+          <dd>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
+              <span className="tag" style={{ color: '#EAF2FA', borderColor: 'rgba(56, 214, 176, 0.4)', background: 'rgba(56, 214, 176, 0.08)' }}>Hops</span>
+              <span className="tag" style={{ color: '#EAF2FA', borderColor: 'rgba(56, 214, 176, 0.4)', background: 'rgba(56, 214, 176, 0.08)' }}>Total Latency (ms)</span>
+              <span className="tag" style={{ color: '#EAF2FA', borderColor: 'rgba(56, 214, 176, 0.4)', background: 'rgba(56, 214, 176, 0.08)' }}>Bottleneck Bandwidth (Mbps)</span>
+              <span className="tag" style={{ color: '#EAF2FA', borderColor: 'rgba(56, 214, 176, 0.4)', background: 'rgba(56, 214, 176, 0.08)' }}>Packet Loss (%)</span>
+            </div>
           </dd>
         </dl>
       </section>
