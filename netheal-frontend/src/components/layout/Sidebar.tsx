@@ -1,7 +1,5 @@
 import { BarChart3, LayoutDashboard, Network, Route, Share2, X, ZapOff } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { StatusBadge } from '../common/StatusBadge';
-import { API_BASE_URL } from '../../services/networkService';
 import type { PageId } from '../../types/network';
 
 export interface NavItem {
@@ -61,29 +59,6 @@ export function Sidebar({ page, open, onNavigate, onClose }: Props) {
           );
         })}
       </nav>
-
-      <div className="sidebar__status">
-        <div className="label">System status</div>
-        <div className="status-row">
-          <span>API</span>
-          <StatusBadge status="info" label="Demo mode" />
-        </div>
-        <div className="status-row">
-          <span>Backend</span>
-          <StatusBadge status="muted" label="Disconnected" />
-        </div>
-        <div className="status-row">
-          <span>Routing</span>
-          <span className="mono">BFS (client)</span>
-        </div>
-        <div className="status-row">
-          <span>ML model</span>
-          <span className="mono">Not connected</span>
-        </div>
-        <div className="sidebar__url mono" title="Future FastAPI base URL">
-          {API_BASE_URL}
-        </div>
-      </div>
     </aside>
   );
 }

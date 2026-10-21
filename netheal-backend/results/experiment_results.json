@@ -1,0 +1,461 @@
+{
+  "timestamp": "2026-10-20 13:02:57 UTC",
+  "total_scenarios": 7,
+  "scenarios": [
+    {
+      "scenario_id": "scenario_1_normal",
+      "scenario_name": "Normal Healthy Topology",
+      "description": "All 7 routers and 11 links fully active. Source R1 to Destination R7.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.2864,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.3753,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": 75.0592,
+          "candidate_routes_evaluated": 16,
+          "execution_time_ms": 16.2227,
+          "message": null
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_2_single_link_failure",
+      "scenario_name": "Primary Link Failure (R2-R5)",
+      "description": "Core link between R2 and R5 fails. Traffic must reroute via R3 or R4.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R3",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 27,
+          "bottleneck_bandwidth_mbps": 70,
+          "estimated_packet_loss_percent": 4.44,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1476,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R3",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 27,
+          "bottleneck_bandwidth_mbps": 70,
+          "estimated_packet_loss_percent": 4.44,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.2332,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R3",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 27,
+          "bottleneck_bandwidth_mbps": 70,
+          "estimated_packet_loss_percent": 4.44,
+          "predicted_quality_score": 64.4585,
+          "candidate_routes_evaluated": 10,
+          "execution_time_ms": 12.9239,
+          "message": null
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_3_single_router_failure",
+      "scenario_name": "Central Transit Router Failure (R3)",
+      "description": "Transit router R3 fails, severing 5 adjacent links. Path must navigate around R3.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1546,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1536,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": 75.0592,
+          "candidate_routes_evaluated": 2,
+          "execution_time_ms": 19.9509,
+          "message": null
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_4_multi_component_failure",
+      "scenario_name": "Multiple Critical Failures (R3 + Link R1-R2)",
+      "description": "R3 router fails and R1-R2 link fails simultaneously. High bottleneck pressure.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R4",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 35,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 4.435,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1278,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R4",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 35,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 4.435,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1516,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R4",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 35,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 4.435,
+          "predicted_quality_score": 58.4521,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 12.7924,
+          "message": null
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_5_bottleneck_diversion",
+      "scenario_name": "Low-Latency High-Loss Tradeoff",
+      "description": "Degradation forcing algorithms to weigh latency vs bandwidth and packet loss.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R3",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 36,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 6.361,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1736,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R4",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 35,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 4.435,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.4074,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R4",
+            "R6",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 35,
+          "bottleneck_bandwidth_mbps": 60,
+          "estimated_packet_loss_percent": 4.435,
+          "predicted_quality_score": 58.4521,
+          "candidate_routes_evaluated": 8,
+          "execution_time_ms": 13.7433,
+          "message": null
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_6_disconnected_destination",
+      "scenario_name": "Complete Destination Isolation",
+      "description": "Both ingress links into R7 (R5-R7 and R6-R7) failed. Unreachable test.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": false,
+          "route": [],
+          "hops": 0,
+          "total_latency_ms": null,
+          "bottleneck_bandwidth_mbps": null,
+          "estimated_packet_loss_percent": null,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 0,
+          "execution_time_ms": 0.152,
+          "message": "No usable route exists between the routers."
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": false,
+          "route": [],
+          "hops": 0,
+          "total_latency_ms": null,
+          "bottleneck_bandwidth_mbps": null,
+          "estimated_packet_loss_percent": null,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 0,
+          "execution_time_ms": 0.13,
+          "message": "No usable route exists between the routers."
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": false,
+          "route": [],
+          "hops": 0,
+          "total_latency_ms": null,
+          "bottleneck_bandwidth_mbps": null,
+          "estimated_packet_loss_percent": null,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 0,
+          "execution_time_ms": 0.5779,
+          "message": "No usable route exists between the routers."
+        }
+      }
+    },
+    {
+      "scenario_id": "scenario_7_healed_restoration",
+      "scenario_name": "Post-Healing Restoration Verification",
+      "description": "Component previously failed is restored, verifying return of optimal routes.",
+      "source": "R1",
+      "destination": "R7",
+      "results": {
+        "bfs": {
+          "method": "bfs",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.1577,
+          "message": null
+        },
+        "dijkstra": {
+          "method": "dijkstra",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": null,
+          "candidate_routes_evaluated": 1,
+          "execution_time_ms": 0.2303,
+          "message": null
+        },
+        "ml": {
+          "method": "ml",
+          "route_found": true,
+          "route": [
+            "R1",
+            "R2",
+            "R5",
+            "R7"
+          ],
+          "hops": 3,
+          "total_latency_ms": 24,
+          "bottleneck_bandwidth_mbps": 100,
+          "estimated_packet_loss_percent": 2.48,
+          "predicted_quality_score": 75.0592,
+          "candidate_routes_evaluated": 16,
+          "execution_time_ms": 12.5127,
+          "message": null
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bfs": {
+      "avg_latency_ms": 28.33,
+      "avg_hops": 3.0,
+      "avg_bandwidth_mbps": 81.67,
+      "avg_packet_loss_pct": 3.78,
+      "avg_quality_score": null,
+      "avg_execution_time_ms": 0.1746,
+      "success_rate_pct": 85.7
+    },
+    "dijkstra": {
+      "avg_latency_ms": 28.17,
+      "avg_hops": 3.0,
+      "avg_bandwidth_mbps": 81.67,
+      "avg_packet_loss_pct": 3.46,
+      "avg_quality_score": null,
+      "avg_execution_time_ms": 0.2586,
+      "success_rate_pct": 85.7
+    },
+    "ml": {
+      "avg_latency_ms": 28.17,
+      "avg_hops": 3.0,
+      "avg_bandwidth_mbps": 81.67,
+      "avg_packet_loss_pct": 3.46,
+      "avg_quality_score": 67.76,
+      "avg_execution_time_ms": 14.691,
+      "success_rate_pct": 85.7
+    }
+  }
+}

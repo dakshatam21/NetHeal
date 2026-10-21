@@ -1,27 +1,21 @@
 # NetHeal — AI-Powered Self-Healing Network Simulator (Frontend)
 
-NetHeal is a software-based network simulator where routers are nodes and links are edges.
-The finished system will simulate router/link failures, evaluate alternative routes, predict
-route quality with a machine-learning model, and compare conventional routing with ML-assisted routing.
+NetHeal is an interactive web dashboard for real-time network topology visualization, failure simulation, route analysis, and machine-learning-assisted path evaluation.
 
-**This repository is the frontend only.** It runs entirely in the browser on mock data and a small
-client-side routing demonstration. No Python backend, NetworkX simulation, ML inference or database exists yet.
+**This frontend is fully integrated with the NetHeal FastAPI backend.** It communicates via HTTP REST requests to `http://localhost:8000`, reflecting actual NetworkX simulation state and Random Forest ML model predictions.
 
-## Features currently implemented
+## Features Implemented
 
-- Five working pages: Overview, Network Topology, Failure Simulator, Route Analysis, Performance Analytics.
-- Interactive React Flow topology (7 routers, 11 links) with custom router nodes, status-coloured edges,
-  selected-route highlighting, zoom/pan/fit-view controls, minimap, legend and router-details panel.
-- Fail / restore routers and links, clear all failures, reset the whole simulation (with confirmation).
-- Route recalculation after every change, "DESTINATION UNREACHABLE" state, timestamped event feed, toast notifications.
-- Route analysis: baseline route, alternative feasible routes, comparison table, hop/latency/loss/bandwidth.
-- Recharts analytics, all labelled DEMO DATA / SIMULATED DATA.
-- A placeholder section for ML-assisted routing marked "NOT CONNECTED".
+- **Five Integrated Pages**: Overview Dashboard, Network Topology, Failure Simulator, Route Analysis, and Performance Analytics.
+- **Interactive Topology Graph**: React Flow 12 (`@xyflow/react`) canvas rendering 7 routers and 11 links with live status-colored edges, active route highlighting, minimap, and router details inspection.
+- **Failure Simulation & Self-Healing**: Live failure injection and restoration for any router or link, triggering instant rerouting on the backend.
+- **Route Analysis**: Algorithm switcher (`BFS`, `Dijkstra`, `ML`), candidate routes table with predicted quality scores, latency, hops, loss, and capacity.
+- **Performance Analytics**: Real empirical benchmark charts powered by live experiment suite outputs (`GET /api/experiments/results`).
+- **Live Connection Detection**: Persistent topbar indicator showing backend health and automated reconnection handling.
 
 ## Technologies
 
-React 18, TypeScript (strict), Vite, @xyflow/react (React Flow 12), Recharts, lucide-react, plain CSS.
-No UI framework, no Tailwind, no Redux, no localStorage.
+React 18, TypeScript (strict mode), Vite, `@xyflow/react`, Recharts, Lucide React icons, Vanilla CSS.
 
 ## Prerequisites
 
@@ -73,40 +67,33 @@ hand-chosen values. Route metrics are computed from them: latency is summed alon
 compounded, bandwidth is the bottleneck link. The trend charts use a deterministic generated series
 (`demoAnalytics.ts`). Nothing is measured from a real network.
 
-## The client-side routing demonstration
+## Testing & Quality Assurance
 
-- A link is usable only if it is not failed AND both of its routers are up. A failed router makes all its
-  links unusable but they are kept in the data so restoring the router restores them.
-- **Baseline route** = breadth-first search (shortest hop count) over usable links. Ties are broken by the order of links in `initialTopology.ts`.
-- **Alternative routes** = all simple paths (depth-first enumeration), sorted by hops then latency.
-- **Network availability** = share of router pairs that can still reach each other.
-- If BFS finds no path the UI shows DESTINATION UNREACHABLE.
+```bash
+# Run the automated Vitest unit and integration test suite
+npm test
 
-## Limitations
+# Type-check and create production build
+npm run build
+```
 
-- No backend, persistence, authentication or real-time data. Refreshing the page resets everything.
-- BFS ignores latency/loss when choosing the baseline, which is intentional: it is the "conventional" reference.
-- ML-assisted routing is not implemented; its UI shows "Awaiting backend integration".
-- Analytics values are illustrative and not experimental results.
-- The graph layout is fixed (nodes are not draggable).
+## Live Backend & ML Integration Architecture
 
-## Planned FastAPI and ML integration
+1. **Authoritative Backend Data Flow**:
+   - `loadTopology()` fetches live node and link definitions via `GET /api/network/topology`.
+   - `failRouterApi` and `restoreRouterApi` trigger graph mutations via `POST /api/network/fail/router/{id}` and `POST /api/network/restore/router/{id}`.
+   - `failLinkApi` and `restoreLinkApi` dispatch mutations via `POST /api/network/fail/link` and `POST /api/network/restore/link`.
+   - `analyzeRouteApi` queries `POST /api/routes/analyze` using the selected algorithm (`bfs`, `dijkstra`, `ml`).
+   - `compareRoutesApi` queries `POST /api/routes/compare` for candidate paths and Random Forest quality scores.
+   - `fetchExperimentResults()` and `runExperimentSuite()` execute live empirical benchmark suites via `/api/experiments/results` and `/api/experiments/run`.
+2. **Multi-Client State Synchronization**:
+   - `NetworkContext` runs periodic non-intrusive background polling to detect authoritative topology changes made by other clients or background processes.
+3. **Graceful Degraded States**:
+   - If the backend is temporarily offline, a topbar badge shows `BACKEND OFFLINE` with an interactive reconnect trigger.
+   - If the ML engine is unavailable, conventional routing (BFS and Dijkstra) continues functioning uninterrupted with informative diagnostic messages.
 
-1. Set `VITE_API_BASE_URL` in `.env` (default `http://localhost:8000`).
-2. In `networkService.ts`, replace each `TODO(FastAPI)` function with a `fetch` call:
-   - `loadTopology` → `GET /api/network/topology`
-   - `simulateNetwork` → `POST /api/network/failures` (NetworkX recomputes routes)
-   - route analysis → `GET/POST /api/routes/analysis`
-   - `getMlPrediction` → `POST /api/routes/predict` (scikit-learn model, optional XGBoost later)
-   - `getDemoAnalytics` → `GET /api/experiments/results` (Pandas/NumPy experiment output)
-3. `simulateNetwork` is synchronous today; it becomes `async` and the context awaits it. UI components do not change.
+## Scope & Operational Context
 
-These endpoints are **planned, not implemented**.
-
-## Presenting this honestly in an academic demonstration
-
-Say: "This is the frontend and interaction prototype. Topology, metrics and analytics are simulated. The
-route calculation you see is a client-side BFS baseline that shows how failure recovery will look.
-The ML-assisted routing, NetworkX simulation and real experiment results are the next phase, and the service
-layer is already shaped for that integration." Do not describe any chart value as a measured result or any
-panel as an ML prediction.
+- **Simulation Engine**: Network simulation is powered by NetworkX on the authoritative FastAPI backend.
+- **Machine Learning**: Route quality scoring is provided by a Scikit-Learn Random Forest model evaluating multi-factor SLA metrics (latency, bandwidth bottleneck, packet loss, and hops).
+- **Physical Network Boundary**: NetHeal models network layer dynamics in software for simulation, training, and benchmarking; it does not manipulate hardware physical router tables or interface firmware.

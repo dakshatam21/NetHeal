@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function Topbar({ title, description, onMenuClick }: Props) {
-  const { snapshot, failures, lastUpdated, resetSimulation } = useNetwork();
+  const { snapshot, failures, lastUpdated, resetSimulation, isConnected } = useNetwork();
   const [confirming, setConfirming] = useState(false);
 
   const failedTotal = failures.routers.length + failures.links.length;
@@ -39,7 +39,7 @@ export function Topbar({ title, description, onMenuClick }: Props) {
       </div>
 
       <div className="topbar__meta">
-        <StatusBadge status="simulation" label="Simulation" />
+        <StatusBadge status={isConnected ? 'healthy' : 'failed'} label={isConnected ? 'FastAPI Online' : 'Backend Offline'} />
         <span className="topbar__health">
           <Activity size={14} />
           <StatusBadge status={health.status} label={health.label} />
