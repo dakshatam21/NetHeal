@@ -4,6 +4,14 @@ export type ComponentStatus = 'healthy' | 'degraded' | 'failed';
 export type RouteStatus = 'optimal' | 'rerouted' | 'unreachable';
 export type EventLevel = 'info' | 'success' | 'warning' | 'error';
 export type RoutingMethod = 'bfs' | 'dijkstra' | 'ml';
+export type PacketSimulationState = 'idle' | 'calculating' | 'running' | 'completed' | 'failed';
+
+export interface ForwardingEntry {
+  router: string;
+  destination: string;
+  nextHop: string;
+  status: 'passed' | 'current' | 'upcoming';
+}
 
 export interface RouterInfo {
   id: string;

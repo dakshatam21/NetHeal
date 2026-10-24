@@ -10,6 +10,8 @@ export type RouterNodeData = {
   isSource: boolean;
   isDestination: boolean;
   onRoute: boolean;
+  isCurrentHop?: boolean;
+  isDelivered?: boolean;
 };
 
 export type RouterFlowNode = Node<RouterNodeData, 'router'>;
@@ -20,6 +22,8 @@ export function RouterNode({ data }: NodeProps<RouterFlowNode>) {
     `router-node--${data.status}`,
     data.selected ? 'router-node--selected' : '',
     data.onRoute ? 'router-node--route' : '',
+    data.isCurrentHop ? 'router-node--active-hop' : '',
+    data.isDelivered ? 'router-node--delivered' : '',
   ]
     .filter(Boolean)
     .join(' ');

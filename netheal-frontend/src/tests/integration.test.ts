@@ -155,4 +155,41 @@ describe('Frontend Integration & Service Helpers', () => {
     expect(result?.linkIds).toEqual([]);
     expect(result?.metrics.hops).toBe(0);
   });
+
+  it('correctly maps rerouted alternative route when R5-R7 fails', () => {
+    // Alternative path avoiding R5-R7
+    const altPath = ['R1', 'R4', 'R6', 'R7'];
+    const linkIds = getLinkIdsForPath(MOCK_TOPOLOGY, altPath);
+    expect(linkIds).toEqual(['R1-R4', 'R4-R6', 'R6-R7']);
+    expect(linkIds).not.toContain('R5-R7');
+  });
+
+  it('correctly maps rerouted alternative route when router R5 fails', () => {
+    // Alternative path avoiding router R5
+    const altPath = ['R1', 'R4', 'R6', 'R7'];
+    expect(altPath).not.toContain('R5');
+    const linkIds = getLinkIdsForPath(MOCK_TOPOLOGY, altPath);
+    expect(linkIds).toEqual(['R1-R4', 'R4-R6', 'R6-R7']);
+    expect(linkIds).not.toContain('R2-R5');
+    expect(linkIds).not.toContain('R3-R5');
+    expect(linkIds).not.toContain('R5-R7');
+  });
+
+  it('generates next-hop forwarding entries sequentially from a calculated route', () => {
+    const route = ['R1', 'R4', 'R6', 'R7'];
+    const destination = 'R7';
+    const fwdTable = [];
+    for (let i = 0; i < route.length - 1; i++) {
+      fwdTable.push({
+        router: route[i],
+        destination,
+        nextHop: route[i + 1],
+      });
+    }
+
+    expect(fwdTable).toHaveLength(3);
+    expect(fwdTable[0]).toEqual({ router: 'R1', destination: 'R7', nextHop: 'R4' });
+    expect(fwdTable[1]).toEqual({ router: 'R4', destination: 'R7', nextHop: 'R6' });
+    expect(fwdTable[2]).toEqual({ router: 'R6', destination: 'R7', nextHop: 'R7' });
+  });
 });

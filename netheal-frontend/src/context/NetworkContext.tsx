@@ -17,8 +17,10 @@ import type {
   BackendNetworkStatus,
   EventLevel,
   FailureState,
+  ForwardingEntry,
   HealthCounts,
   NetworkEvent,
+  PacketSimulationState,
   RouteResult,
   RouteStatus,
   RoutingMethod,
@@ -43,6 +45,16 @@ interface NetworkContextValue {
   isLoading: boolean;
   lastUpdated: Date;
   healthStatus: BackendNetworkStatus | null;
+  simulationState: PacketSimulationState;
+  packetCoords: { x: number; y: number } | null;
+  currentHopIndex: number;
+  activeEdgeId: string | null;
+  simulationSpeed: number;
+  forwardingTable: ForwardingEntry[];
+  simulationMessage: string | null;
+  runSimulation: () => Promise<void>;
+  stopSimulation: () => void;
+  setSimulationSpeed: (speed: number) => void;
   setSource: (id: string) => void;
   setDestination: (id: string) => void;
   setRoutingMethod: (method: RoutingMethod) => void;
@@ -93,7 +105,40 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
 
+  // Packet simulation states
+  const [simulationState, setSimulationState] = useState<PacketSimulationState>('idle');
+  const [packetCoords, setPacketCoords] = useState<{ x: number; y: number } | null>(null);
+  const [currentHopIndex, setCurrentHopIndex] = useState<number>(-1);
+  const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1.0);
+  const [forwardingTable, setForwardingTable] = useState<ForwardingEntry[]>([]);
+  const [simulationMessage, setSimulationMessage] = useState<string | null>(null);
+
+  const animFrameRef = useRef<number | null>(null);
+  const speedRef = useRef<number>(1.0);
+  speedRef.current = simulationSpeed;
+
   const lastMutationTimeRef = useRef<number>(0);
+
+  // Stop running packet animation
+  const stopSimulation = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    setSimulationState('idle');
+    setPacketCoords(null);
+    setActiveEdgeId(null);
+    setCurrentHopIndex(-1);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, []);
 
   const pushEvents = useCallback((entries: NetworkEvent[]) => {
     setEvents((prev) => [...[...entries].reverse(), ...prev].slice(0, 50));
@@ -253,6 +298,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const failRouter = useCallback(
     async (id: string) => {
       if (!topology) return;
+      stopSimulation();
       lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
@@ -291,6 +337,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const restoreRouter = useCallback(
     async (id: string) => {
       if (!topology) return;
+      stopSimulation();
       lastMutationTimeRef.current = Date.now();
       setIsLoading(true);
       try {
@@ -343,6 +390,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const failLink = useCallback(
     async (id: string) => {
       if (!topology) return;
+      stopSimulation();
       const endpoints = resolveLinkEndpoints(id);
       if (!endpoints) {
         pushToast('error', `Could not resolve endpoints for link ${id}`);
@@ -386,6 +434,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   const restoreLink = useCallback(
     async (id: string) => {
       if (!topology) return;
+      stopSimulation();
       const endpoints = resolveLinkEndpoints(id);
       if (!endpoints) {
         pushToast('error', `Could not resolve endpoints for link ${id}`);
@@ -428,6 +477,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   // Clear all failures
   const clearFailures = useCallback(async () => {
     if (!topology) return;
+    stopSimulation();
     lastMutationTimeRef.current = Date.now();
     setIsLoading(true);
     try {
@@ -448,6 +498,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
 
   // Reset entire simulation
   const resetSimulation = useCallback(async () => {
+    stopSimulation();
     lastMutationTimeRef.current = Date.now();
     setIsLoading(true);
     try {
@@ -474,37 +525,184 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     (nextSource: string) => {
       if (!topology) return;
       if (nextSource === source) return;
+      stopSimulation();
       const nextDest = nextSource === destination ? source : destination;
       setSourceState(nextSource);
       setDestinationState(nextDest);
       evaluateRoutes(topology, nextSource, nextDest, routingMethod);
     },
-    [topology, source, destination, routingMethod, evaluateRoutes]
+    [topology, source, destination, routingMethod, evaluateRoutes, stopSimulation]
   );
 
   const setDestination = useCallback(
     (nextDest: string) => {
       if (!topology) return;
       if (nextDest === destination) return;
+      stopSimulation();
       const nextSrc = nextDest === source ? destination : source;
       setSourceState(nextSrc);
       setDestinationState(nextDest);
       evaluateRoutes(topology, nextSrc, nextDest, routingMethod);
     },
-    [topology, source, destination, routingMethod, evaluateRoutes]
+    [topology, source, destination, routingMethod, evaluateRoutes, stopSimulation]
   );
 
   // Set algorithm method (BFS / Dijkstra / ML)
   const setRoutingMethod = useCallback(
     (method: RoutingMethod) => {
+      stopSimulation();
       setRoutingMethodState(method);
       if (topology) {
         evaluateRoutes(topology, source, destination, method);
         pushEvents([makeEvent('info', `Routing algorithm switched to: ${method.toUpperCase()}`)]);
       }
     },
-    [topology, source, destination, evaluateRoutes, pushEvents]
+    [topology, source, destination, evaluateRoutes, pushEvents, stopSimulation]
   );
+
+  // Run full packet simulation workflow
+  const runSimulation = useCallback(async () => {
+    if (!topology) return;
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    setPacketCoords(null);
+    setActiveEdgeId(null);
+    setCurrentHopIndex(-1);
+    setSimulationState('calculating');
+    setSimulationMessage(null);
+
+    try {
+      const routeRes = await analyzeRouteApi(source, destination, routingMethod);
+      const mappedRoute = mapBackendRouteToResult(routeRes, topology);
+      setActiveRoute(mappedRoute);
+
+      if (!routeRes.route_found || !mappedRoute || mappedRoute.path.length === 0) {
+        setSimulationState('failed');
+        setRouteStatus('unreachable');
+        const msg =
+          routeRes.message ||
+          `Destination unreachable: No valid route is available from ${source} to ${destination} under current network failures.`;
+        setSimulationMessage(msg);
+        pushToast('error', `Simulation failed: Destination ${destination} unreachable`);
+        pushEvents([makeEvent('error', `Simulation: Destination ${destination} is unreachable`)]);
+        return;
+      }
+
+      const path = mappedRoute.path;
+      const fwdTable: ForwardingEntry[] = [];
+      for (let i = 0; i < path.length - 1; i++) {
+        fwdTable.push({
+          router: path[i],
+          destination,
+          nextHop: path[i + 1],
+          status: i === 0 ? 'current' : 'upcoming',
+        });
+      }
+      setForwardingTable(fwdTable);
+
+      const hasFailures = failures.routers.length > 0 || failures.links.length > 0;
+      if (hasFailures) {
+        setRouteStatus('rerouted');
+        pushEvents([
+          makeEvent(
+            'info',
+            `Self-healing route engaged: ${path.join(' → ')} (${routingMethod.toUpperCase()})`
+          ),
+        ]);
+      } else {
+        setRouteStatus('optimal');
+      }
+
+      setSimulationState('running');
+      pushToast('info', `Simulating packet flow: ${path.join(' → ')}`);
+
+      const nodeCoords = path.map((rId) => {
+        const r = topology.routers.find((node) => node.id === rId);
+        return {
+          id: rId,
+          x: (r?.x ?? 0) + 48,
+          y: (r?.y ?? 0) + 27,
+        };
+      });
+
+      if (nodeCoords.length <= 1) {
+        setPacketCoords({ x: nodeCoords[0].x, y: nodeCoords[0].y });
+        setCurrentHopIndex(0);
+        setSimulationState('completed');
+        setSimulationMessage('Delivered immediately (source and destination are identical)');
+        return;
+      }
+
+      setPacketCoords({ x: nodeCoords[0].x, y: nodeCoords[0].y });
+      setCurrentHopIndex(0);
+
+      const baseHopDuration = 1000 / (speedRef.current || 1.0);
+
+      const animateHop = (h: number) => {
+        if (h >= nodeCoords.length - 1) {
+          setCurrentHopIndex(h);
+          setActiveEdgeId(null);
+          setPacketCoords({ x: nodeCoords[h].x, y: nodeCoords[h].y });
+          setSimulationState('completed');
+          setForwardingTable((prev) => prev.map((entry) => ({ ...entry, status: 'passed' })));
+          setSimulationMessage(`Packet successfully delivered to ${destination} via ${path.join(' → ')}!`);
+          pushToast('success', `Packet delivered to ${destination}`);
+          pushEvents([
+            makeEvent('success', `Packet reached destination ${destination} via ${path.join(' → ')}`),
+          ]);
+          return;
+        }
+
+        setCurrentHopIndex(h);
+        setForwardingTable((prev) =>
+          prev.map((entry, idx) => ({
+            ...entry,
+            status: idx < h ? 'passed' : idx === h ? 'current' : 'upcoming',
+          }))
+        );
+
+        const u = path[h];
+        const v = path[h + 1];
+        const link = topology.links.find(
+          (l) => (l.source === u && l.target === v) || (l.source === v && l.target === u)
+        );
+        setActiveEdgeId(link ? link.id : `${u}-${v}`);
+
+        const start = nodeCoords[h];
+        const end = nodeCoords[h + 1];
+        const startTime = performance.now();
+        const hopDuration = baseHopDuration;
+
+        const step = (now: number) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / hopDuration);
+          const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+          const curX = start.x + (end.x - start.x) * ease;
+          const curY = start.y + (end.y - start.y) * ease;
+          setPacketCoords({ x: curX, y: curY });
+
+          if (progress < 1) {
+            animFrameRef.current = requestAnimationFrame(step);
+          } else {
+            animateHop(h + 1);
+          }
+        };
+
+        animFrameRef.current = requestAnimationFrame(step);
+      };
+
+      setTimeout(() => {
+        animateHop(0);
+      }, 150);
+    } catch (err) {
+      setSimulationState('failed');
+      const msg = err instanceof Error ? err.message : 'Simulation failed unexpectedly';
+      setSimulationMessage(msg);
+      pushToast('error', `Simulation failed: ${msg}`);
+    }
+  }, [topology, source, destination, routingMethod, failures, pushToast, pushEvents]);
 
   // Health counts computed from topology and failures using authoritative reachability and link status
   const counts: HealthCounts = useMemo(() => {
@@ -585,6 +783,16 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     isLoading,
     lastUpdated,
     healthStatus,
+    simulationState,
+    packetCoords,
+    currentHopIndex,
+    activeEdgeId,
+    simulationSpeed,
+    forwardingTable,
+    simulationMessage,
+    runSimulation,
+    stopSimulation,
+    setSimulationSpeed,
     setSource,
     setDestination,
     setRoutingMethod,
