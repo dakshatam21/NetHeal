@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RotateCcw, Zap, ZapOff } from 'lucide-react';
+import { Play, RotateCcw, Square, Zap, ZapOff } from 'lucide-react';
 import { Panel } from '../components/common/Panel';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { EventFeed } from '../components/network/EventFeed';
@@ -9,9 +9,25 @@ import { RoutePath } from '../components/network/RoutePath';
 import { useNetwork } from '../context/NetworkContext';
 
 export function FailureSimulatorPage() {
-  const { topology, failures, snapshot, source, destination, algorithm, failRouter, restoreRouter, failLink, restoreLink, clearFailures } =
-    useNetwork();
+  const {
+    topology,
+    failures,
+    snapshot,
+    source,
+    destination,
+    algorithm,
+    failRouter,
+    restoreRouter,
+    failLink,
+    restoreLink,
+    clearFailures,
+    simulationState,
+    runSimulation,
+    stopSimulation,
+  } = useNetwork();
   const { route, status, counts } = snapshot;
+
+  const isRunning = simulationState === 'running';
 
   const [routerChoice, setRouterChoice] = useState(topology.routers[0].id);
   const [linkChoice, setLinkChoice] = useState(topology.links[0].id);
@@ -124,6 +140,22 @@ export function FailureSimulatorPage() {
               )}
             </dd>
           </dl>
+          <div style={{ marginTop: '1rem', paddingTop: '0.8rem', borderTop: '1px solid var(--border)' }}>
+            {!isRunning ? (
+              <button
+                type="button"
+                className="btn btn--primary btn--sm btn--block"
+                onClick={runSimulation}
+                disabled={status === 'unreachable'}
+              >
+                <Play size={14} fill="currentColor" /> Run Packet Simulation Along Active Route
+              </button>
+            ) : (
+              <button type="button" className="btn btn--danger btn--sm btn--block" onClick={stopSimulation}>
+                <Square size={14} fill="currentColor" /> Stop Packet Simulation
+              </button>
+            )}
+          </div>
         </Panel>
 
         <Panel title="Event Feed" tag="TIMESTAMPED">
