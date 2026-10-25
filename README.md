@@ -172,7 +172,7 @@ Detailed tables and comparative analysis are available in [`docs/EXPERIMENTS_AND
 
 ---
 
-## 10. Product Scope & Limitations
+## 10. Product Scope & Limitations 
 
 - **Simulation Scope**: NetHeal is an educational software network simulator based on NetworkX. It does not configure physical router hardware, kernel routing tables, or capture live packet telemetry.
 - **Synthetic Training Data**: The Random Forest regressor is trained on synthetic SLA formulas.
