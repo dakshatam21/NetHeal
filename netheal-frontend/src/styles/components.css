@@ -733,6 +733,10 @@
   opacity: 0.5;
 }
 
+.react-flow__node-router {
+  visibility: visible !important;
+}
+
 .router-node {
   position: relative;
   min-width: 96px;
