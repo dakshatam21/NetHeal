@@ -93,7 +93,6 @@ export async function apiRequest<T>(
       console.warn(
         `Local backend (${LOCAL_URL}) offline or unreachable. Falling back to Render: ${RENDER_URL}`
       );
-      API_BASE_URL = RENDER_URL;
       return await executeRequest<T>(RENDER_URL, endpoint, options, timeoutMs);
     }
     throw err;

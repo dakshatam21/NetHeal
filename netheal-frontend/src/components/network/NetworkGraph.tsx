@@ -44,18 +44,23 @@ export function NetworkGraph({ height = 480, showMiniMap = false }: Props) {
 
   const route = snapshot.route;
 
-  const nodes = useMemo(() => {
-    const currentHopRouterId =
-      route && currentHopIndex >= 0 && currentHopIndex < route.path.length
-        ? route.path[currentHopIndex]
-        : null;
+  const currentHopRouterId = useMemo(() => {
+    return route && currentHopIndex >= 0 && currentHopIndex < route.path.length
+      ? route.path[currentHopIndex]
+      : null;
+  }, [route, currentHopIndex]);
 
-    const routerNodes: (RouterFlowNode | PacketFlowNode)[] = topology.routers.map(
+  const baseRouterNodes = useMemo(() => {
+    return topology.routers.map(
       (r): RouterFlowNode => ({
         id: r.id,
         type: 'router',
         position: { x: r.x, y: r.y },
         draggable: false,
+        width: 116,
+        height: 62,
+        initialWidth: 116,
+        initialHeight: 62,
         data: {
           routerId: r.id,
           ip: r.ip,
@@ -69,26 +74,6 @@ export function NetworkGraph({ height = 480, showMiniMap = false }: Props) {
         },
       }),
     );
-
-    // If packet has active coordinates, inject packet marker node
-    if (packetCoords) {
-      routerNodes.push({
-        id: '__sim_packet__',
-        type: 'packet',
-        position: { x: packetCoords.x - 18, y: packetCoords.y - 18 },
-        draggable: false,
-        selectable: false,
-        zIndex: 1000,
-        data: {
-          hop: Math.max(0, currentHopIndex),
-          label: 'PKT',
-          state: simulationState,
-          speed: simulationSpeed,
-        },
-      });
-    }
-
-    return routerNodes as Node[];
   }, [
     topology,
     failures,
@@ -96,11 +81,36 @@ export function NetworkGraph({ height = 480, showMiniMap = false }: Props) {
     source,
     destination,
     selectedRouterId,
-    packetCoords,
-    currentHopIndex,
+    currentHopRouterId,
     simulationState,
-    simulationSpeed,
   ]);
+
+  const nodes = useMemo(() => {
+    if (!packetCoords || !Number.isFinite(packetCoords.x) || !Number.isFinite(packetCoords.y)) {
+      return baseRouterNodes as Node[];
+    }
+
+    const packetNode: PacketFlowNode = {
+      id: '__sim_packet__',
+      type: 'packet',
+      position: { x: packetCoords.x - 18, y: packetCoords.y - 18 },
+      draggable: false,
+      selectable: false,
+      zIndex: 1000,
+      width: 36,
+      height: 36,
+      initialWidth: 36,
+      initialHeight: 36,
+      data: {
+        hop: Math.max(0, currentHopIndex),
+        label: 'PKT',
+        state: simulationState,
+        speed: simulationSpeed,
+      },
+    };
+
+    return [...baseRouterNodes, packetNode] as Node[];
+  }, [baseRouterNodes, packetCoords, currentHopIndex, simulationState, simulationSpeed]);
 
   const edges = useMemo(
     () =>
@@ -169,6 +179,8 @@ export function NetworkGraph({ height = 480, showMiniMap = false }: Props) {
     }
   };
 
+  const fitViewOptions = useMemo(() => ({ padding: 0.2 }), []);
+
   return (
     <div className="graph-canvas" style={{ height }} role="group" aria-label="Interactive network topology graph">
       <ReactFlow
@@ -183,7 +195,7 @@ export function NetworkGraph({ height = 480, showMiniMap = false }: Props) {
         onEdgeClick={handleEdgeClick}
         onPaneClick={() => selectRouter(null)}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={fitViewOptions}
         minZoom={0.3}
         maxZoom={1.8}
         nodesDraggable={false}

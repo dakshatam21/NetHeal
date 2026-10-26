@@ -103,6 +103,7 @@ export function SimulationController() {
           {!isRunning ? (
             <button
               type="button"
+              id="run-simulation-btn"
               className={`btn btn--primary btn--run ${isCalculating ? 'btn--loading' : ''}`}
               onClick={runSimulation}
               disabled={isCalculating}
